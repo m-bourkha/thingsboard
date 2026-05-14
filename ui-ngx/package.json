@@ -52,7 +52,7 @@
     "font-awesome": "^4.7.0",
     "html2canvas": "^1.4.1",
     "jquery": "^3.7.1",
-    "jquery.terminal": "^2.45.2",
+    "jquery.terminal": "^2.46.0",
     "js-beautify": "1.15.4",
     "json-schema-defaults": "^0.4.0",
     "jstree": "^3.3.17",
