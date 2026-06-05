@@ -53,6 +53,9 @@ export enum EntityType {
   CALCULATED_FIELD = 'CALCULATED_FIELD',
   AI_MODEL = 'AI_MODEL',
   API_KEY = 'API_KEY',
+  ENTITY_GROUP = 'ENTITY_GROUP',
+  ROLE = 'ROLE',
+  GROUP_PERMISSION = 'GROUP_PERMISSION',
 }
 
 export enum AliasEntityType {
@@ -521,6 +524,45 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         selectedEntities: 'api-key.selected-api-keys'
       }
     ],
+    [
+      EntityType.ENTITY_GROUP,
+      {
+        type: 'entity.type-entity-group',
+        typePlural: 'entity.type-entity-groups',
+        list: 'entityGroup.entity-groups',
+        details: 'entityGroup.entity-groups',
+        add: 'entityGroup.add',
+        noEntities: 'entityGroup.no-entity-groups-text',
+        search: 'entityGroup.search',
+        selectedEntities: 'entityGroup.selected-entity-groups'
+      }
+    ],
+    [
+      EntityType.ROLE,
+      {
+        type: 'entity.type-role',
+        typePlural: 'entity.type-roles',
+        list: 'role.roles',
+        details: 'role.roles',
+        add: 'role.add',
+        noEntities: 'role.no-roles-text',
+        search: 'role.search',
+        selectedEntities: 'role.selected-roles'
+      }
+    ],
+    [
+      EntityType.GROUP_PERMISSION,
+      {
+        type: 'entity.type-group-permission',
+        typePlural: 'entity.type-group-permissions',
+        list: 'groupPermission.permissions',
+        details: 'groupPermission.permissions',
+        add: 'groupPermission.add',
+        noEntities: 'groupPermission.no-permissions-text',
+        search: 'groupPermission.search',
+        selectedEntities: 'groupPermission.selected-permissions'
+      }
+    ],
   ]
 );
 
@@ -669,6 +711,24 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.API_KEY,
       {
         helpLinkId: 'apiKeys'
+      }
+    ],
+    [
+      EntityType.ENTITY_GROUP,
+      {
+        helpLinkId: 'entityGroups'
+      }
+    ],
+    [
+      EntityType.ROLE,
+      {
+        helpLinkId: 'roles'
+      }
+    ],
+    [
+      EntityType.GROUP_PERMISSION,
+      {
+        helpLinkId: 'groupPermissions'
       }
     ],
   ]

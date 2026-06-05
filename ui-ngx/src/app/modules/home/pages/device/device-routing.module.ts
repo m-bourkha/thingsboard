@@ -25,6 +25,9 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { MenuId } from '@core/services/menu.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
+import { GroupedEntitiesTableConfigResolver } from '@home/components/group/grouped-entities-table-config.resolver';
 
 export const deviceRoutes: Routes = [
   {
@@ -62,6 +65,33 @@ export const deviceRoutes: Routes = [
         },
         resolve: {
           entitiesTableConfig: DevicesTableConfigResolver
+        }
+      },
+      {
+        path: 'groups',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.DEVICE,
+          title: 'entityGroup.device-groups',
+          breadcrumb: {
+            label: 'entityGroup.device-groups',
+            icon: 'group_work'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: EntityGroupsTableConfigResolver
+        }
+      },
+      {
+        path: 'groups/:entityGroupId/entities',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.DEVICE
+        },
+        resolve: {
+          entitiesTableConfig: GroupedEntitiesTableConfigResolver
         }
       }
     ]

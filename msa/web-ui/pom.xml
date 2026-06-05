@@ -121,6 +121,7 @@
                 <executions>
                     <execution>
                         <id>extract-web-ui</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>unpack</goal>
                         </goals>

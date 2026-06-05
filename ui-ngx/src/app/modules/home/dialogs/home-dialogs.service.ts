@@ -22,6 +22,10 @@ import {
   ImportDialogCsvComponent,
   ImportDialogCsvData
 } from '@shared/import-export/import-dialog-csv.component';
+import {
+  AddCustomersToGroupDialogComponent,
+  AddCustomersToGroupDialogData
+} from '@home/dialogs/add-customers-to-group-dialog.component';
 
 @Injectable()
 export class HomeDialogsService {
@@ -39,6 +43,16 @@ export class HomeDialogsService {
       case EntityType.EDGE:
         return this.openImportDialogCSV(entityType, 'edge.import', 'edge.edge-file');
     }
+  }
+
+  public addCustomersToGroup(groupId: string): Observable<boolean> {
+    return this.dialog.open<AddCustomersToGroupDialogComponent, AddCustomersToGroupDialogData, boolean>(
+      AddCustomersToGroupDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: { groupId }
+      }
+    ).afterClosed();
   }
 
   private openImportDialogCSV(entityType: EntityType, importTitle: string, importFileLabel: string): Observable<boolean> {

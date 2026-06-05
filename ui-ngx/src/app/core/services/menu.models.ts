@@ -99,6 +99,8 @@ export enum MenuId {
   asset_profiles = 'asset_profiles',
   customers = 'customers',
   calculated_fields = 'calculated_fields',
+  customers_all = 'customers_all',
+  customers_groups = 'customers_groups',
   rule_chains = 'rule_chains',
   edge_management = 'edge_management',
   edges = 'edges',
@@ -638,6 +640,26 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.customers_all,
+    {
+      id: MenuId.customers_all,
+      name: 'customer.all',
+      type: 'link',
+      path: '/customers/all',
+      icon: 'supervisor_account'
+    }
+  ],
+  [
+    MenuId.customers_groups,
+    {
+      id: MenuId.customers_groups,
+      name: 'entityGroup.groups',
+      type: 'link',
+      path: '/customers/groups',
+      icon: 'group_work'
+    }
+  ],
+  [
     MenuId.rule_chains,
     {
       id: MenuId.rule_chains,
@@ -850,8 +872,14 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.asset_profiles}
         ]
       },
-      {id: MenuId.customers},
       {id: MenuId.calculated_fields},
+      {
+        id: MenuId.customers,
+        pages: [
+          {id: MenuId.customers_all},
+          {id: MenuId.customers_groups}
+        ]
+      },
       {id: MenuId.rule_chains},
       {
         id: MenuId.edge_management,

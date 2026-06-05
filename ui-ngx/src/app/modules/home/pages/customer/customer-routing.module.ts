@@ -32,11 +32,16 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { MenuId } from '@core/services/menu.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
 
 const routes: Routes = [
   {
     path: 'customers',
+    component: RouterTabsComponent,
     data: {
+      auth: [Authority.TENANT_ADMIN],
       breadcrumb: {
         menuId: MenuId.customers
       }
@@ -44,10 +49,51 @@ const routes: Routes = [
     children: [
       {
         path: '',
+        children: [],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          redirectTo: '/customers/all'
+        }
+      },
+      {
+        path: 'all',
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
-          title: 'customer.customers'
+          title: 'customer.customers',
+          breadcrumb: {
+            menuId: MenuId.customers_all
+          }
+        },
+        resolve: {
+          entitiesTableConfig: CustomersTableConfigResolver
+        }
+      },
+      {
+        path: 'groups',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.CUSTOMER,
+          title: 'entityGroup.customer-groups',
+          breadcrumb: {
+            menuId: MenuId.customers_groups
+          }
+        },
+        resolve: {
+          entitiesTableConfig: EntityGroupsTableConfigResolver
+        }
+      },
+      {
+        path: 'groups/:entityGroupId/customers/all',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'customer.customers',
+          breadcrumb: {
+            label: 'entityGroup.group-customers',
+            icon: 'supervisor_account'
+          }
         },
         resolve: {
           entitiesTableConfig: CustomersTableConfigResolver
@@ -266,7 +312,7 @@ const routes: Routes = [
             }
           }
         ]
-      }
+      },
     ]
   }
 ];

@@ -25,6 +25,9 @@ import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { MenuId } from '@core/services/menu.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
+import { GroupedEntitiesTableConfigResolver } from '@home/components/group/grouped-entities-table-config.resolver';
 
 export const assetRoutes: Routes = [
   {
@@ -62,6 +65,33 @@ export const assetRoutes: Routes = [
         },
         resolve: {
           entitiesTableConfig: AssetsTableConfigResolver
+        }
+      },
+      {
+        path: 'groups',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.ASSET,
+          title: 'entityGroup.asset-groups',
+          breadcrumb: {
+            label: 'entityGroup.asset-groups',
+            icon: 'group_work'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: EntityGroupsTableConfigResolver
+        }
+      },
+      {
+        path: 'groups/:entityGroupId/entities',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.ASSET
+        },
+        resolve: {
+          entitiesTableConfig: GroupedEntitiesTableConfigResolver
         }
       }
     ]

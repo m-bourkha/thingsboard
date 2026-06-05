@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 
 import {
   DateEntityTableColumn,
@@ -35,6 +35,7 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { EntityGroupService } from '@core/http/entity-group.service';
 
 @Injectable()
 export class CustomersTableConfigResolver  {
@@ -46,7 +47,8 @@ export class CustomersTableConfigResolver  {
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private store: Store<AppState>) {
+              private store: Store<AppState>,
+              private entityGroupService: EntityGroupService) {
 
     this.config.entityType = EntityType.CUSTOMER;
     this.config.entityComponent = CustomerComponent;
@@ -133,18 +135,43 @@ export class CustomersTableConfigResolver  {
     this.config.detailsReadonly = (customer) => customer && customer.additionalInfo && customer.additionalInfo.isPublic;
   }
 
-  resolve(): EntityTableConfig<Customer> {
-    this.config.tableTitle = this.translate.instant('customer.customers');
-
+  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<Customer> {
+    const entityGroupId = route.params.entityGroupId;
+    if (entityGroupId) {
+      this.config.tableTitle = this.translate.instant('entityGroup.group-customers');
+      this.config.entitiesFetchFunction = pageLink =>
+        this.entityGroupService.getEntitiesByGroup<Customer>(entityGroupId, pageLink);
+      this.config.addEnabled = true;
+      this.config.entitiesDeleteEnabled = false;
+      this.config.addActionDescriptors = [
+        {
+          name: this.translate.instant('entityGroup.add-customers'),
+          icon: 'add',
+          isEnabled: () => true,
+          onAction: () => {
+            this.homeDialogs.addCustomersToGroup(entityGroupId).subscribe(result => {
+              if (result) {
+                this.config.updateData();
+              }
+            });
+          }
+        }
+      ];
+    } else {
+      this.config.tableTitle = this.translate.instant('customer.customers');
+      this.config.entitiesFetchFunction = pageLink => this.customerService.getCustomers(pageLink);
+      this.config.addEnabled = true;
+      this.config.entitiesDeleteEnabled = true;
+      this.config.addActionDescriptors = [];
+    }
     return this.config;
   }
 
-  private openCustomer($event: Event, customer: Customer, config: EntityTableConfig<Customer>) {
+  private openCustomer($event: Event, customer: Customer) {
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([customer.id.id], {relativeTo: config.getActivatedRoute()});
-    this.router.navigateByUrl(url);
+    this.router.navigateByUrl(`customers/${customer.id.id}`);
   }
 
   manageCustomerUsers($event: Event, customer: Customer) {
@@ -185,7 +212,7 @@ export class CustomersTableConfigResolver  {
   onCustomerAction(action: EntityAction<Customer>, config: EntityTableConfig<Customer>): boolean {
     switch (action.action) {
       case 'open':
-        this.openCustomer(action.event, action.entity, config);
+        this.openCustomer(action.event, action.entity);
         return true;
       case 'manageUsers':
         this.manageCustomerUsers(action.event, action.entity);

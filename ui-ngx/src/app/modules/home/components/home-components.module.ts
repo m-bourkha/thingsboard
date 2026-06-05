@@ -202,6 +202,14 @@ import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key
 import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
 import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
+import {
+  EntityGroupsTableConfigResolver
+} from '@home/components/group/entity-groups-table-config.resolver';
+import {
+  GroupedEntitiesTableConfigResolver
+} from '@home/components/group/grouped-entities-table-config.resolver';
+import { EntityGroupsTabComponent } from '@home/components/group/entity-groups-tab.component';
+import { EntityGroupComponent } from '@home/components/group/entity-group.component';
 
 @NgModule({
   declarations:
@@ -359,7 +367,9 @@ import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
       ApiKeyGeneratedDialogComponent,
       AuditLogHeaderComponent,
       AuditLogFilterComponent,
-      EventsDialogComponent
+      EventsDialogComponent,
+      EntityGroupsTabComponent,
+      EntityGroupComponent
     ],
   imports: [
     CommonModule,
@@ -508,7 +518,9 @@ import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
     ResourcesLibraryComponent,
     ApiKeysTableComponent,
     ApiKeysTableDialogComponent,
-    EventsDialogComponent
+    EventsDialogComponent,
+    EntityGroupsTabComponent,
+    EntityGroupComponent
   ],
   providers: [
     WidgetComponentService,
@@ -517,7 +529,9 @@ import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
     {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
     {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
     {provide: HOME_COMPONENTS_MODULE_TOKEN, useValue: HomeComponentsModule },
-    {provide: MODULES_MAP, useValue: modulesMap}
+    {provide: MODULES_MAP, useValue: modulesMap},
+    EntityGroupsTableConfigResolver,
+    GroupedEntitiesTableConfigResolver
   ]
 })
 export class HomeComponentsModule { }

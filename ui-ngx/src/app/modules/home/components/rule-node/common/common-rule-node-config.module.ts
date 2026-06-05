@@ -35,6 +35,9 @@ import { AlarmStatusSelectComponent } from './alarm-status-select.component';
 import { ExampleHintComponent } from './example-hint.component';
 import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list-config.component';
 
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
 @NgModule({
   declarations: [
     KvMapConfigComponent,
