@@ -214,4 +214,18 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "d.name, d.version, d.type, d.label, d.deviceProfileId, d.additionalInfo) FROM DeviceEntity d WHERE d.id > :id ORDER BY d.id")
     List<DeviceFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
+    @Query(value = "SELECT d.* FROM device d " +
+                   "INNER JOIN entity_group_relation egr ON egr.entity_id = d.id " +
+                   "WHERE egr.group_id = :groupId AND egr.entity_type = 'DEVICE' " +
+                   "AND (:textSearch IS NULL OR d.search_text ILIKE CONCAT('%', :textSearch, '%'))",
+           countQuery = "SELECT count(d.id) FROM device d " +
+                        "INNER JOIN entity_group_relation egr ON egr.entity_id = d.id " +
+                        "WHERE egr.group_id = :groupId AND egr.entity_type = 'DEVICE' " +
+                        "AND (:textSearch IS NULL OR d.search_text ILIKE CONCAT('%', :textSearch, '%'))",
+           nativeQuery = true)
+    Page<DeviceEntity> findByEntityGroupId(
+            @Param("groupId") UUID groupId,
+            @Param("textSearch") String textSearch,
+            Pageable pageable);
+
 }

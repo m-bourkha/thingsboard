@@ -69,4 +69,18 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
     List<CustomerFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
     List<CustomerEntity> findCustomersByTenantIdAndIdIn(UUID tenantId, List<UUID> customerIds);
+
+    @Query(value = "SELECT c.* FROM customer c " +
+                   "INNER JOIN entity_group_relation egr ON egr.entity_id = c.id " +
+                   "WHERE egr.group_id = :groupId AND egr.entity_type = 'CUSTOMER' " +
+                   "AND (:textSearch IS NULL OR c.title ILIKE CONCAT('%', :textSearch, '%'))",
+           countQuery = "SELECT count(c.id) FROM customer c " +
+                        "INNER JOIN entity_group_relation egr ON egr.entity_id = c.id " +
+                        "WHERE egr.group_id = :groupId AND egr.entity_type = 'CUSTOMER' " +
+                        "AND (:textSearch IS NULL OR c.title ILIKE CONCAT('%', :textSearch, '%'))",
+           nativeQuery = true)
+    Page<CustomerEntity> findByEntityGroupId(
+            @Param("groupId") UUID groupId,
+            @Param("textSearch") String textSearch,
+            Pageable pageable);
 }

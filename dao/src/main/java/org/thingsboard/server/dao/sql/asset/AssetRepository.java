@@ -234,4 +234,18 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "a.name, a.version, a.type, a.label, a.assetProfileId, a.additionalInfo) FROM AssetEntity a WHERE a.id > :id ORDER BY a.id")
     List<AssetFields> findAllFields(@Param("id") UUID id, Limit limit);
 
+    @Query(value = "SELECT a.* FROM asset a " +
+                   "INNER JOIN entity_group_relation egr ON egr.entity_id = a.id " +
+                   "WHERE egr.group_id = :groupId AND egr.entity_type = 'ASSET' " +
+                   "AND (:textSearch IS NULL OR a.search_text ILIKE CONCAT('%', :textSearch, '%'))",
+           countQuery = "SELECT count(a.id) FROM asset a " +
+                        "INNER JOIN entity_group_relation egr ON egr.entity_id = a.id " +
+                        "WHERE egr.group_id = :groupId AND egr.entity_type = 'ASSET' " +
+                        "AND (:textSearch IS NULL OR a.search_text ILIKE CONCAT('%', :textSearch, '%'))",
+           nativeQuery = true)
+    Page<AssetEntity> findByEntityGroupId(
+            @Param("groupId") UUID groupId,
+            @Param("textSearch") String textSearch,
+            Pageable pageable);
+
 }
