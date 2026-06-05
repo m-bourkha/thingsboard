@@ -72,7 +72,10 @@ public enum EntityType {
             return "AI model";
         }
     },
-    API_KEY(44);
+    API_KEY(44),
+    ENTITY_GROUP(45, "entity_group"),
+    ROLE(46, "tb_role"),
+    GROUP_PERMISSION(47, "group_permission");
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto

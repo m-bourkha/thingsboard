@@ -117,3 +117,17 @@ CREATE INDEX IF NOT EXISTS idx_job_tenant_id ON job(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_ai_model_tenant_id ON ai_model(tenant_id);
 
 CREATE INDEX IF NOT EXISTS idx_api_key_user_id ON api_key(user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS entity_group_all_unq ON entity_group(owner_id, entity_type) WHERE group_all = true;
+
+CREATE INDEX IF NOT EXISTS idx_entity_group_owner ON entity_group(tenant_id, owner_id, entity_type);
+
+CREATE INDEX IF NOT EXISTS idx_entity_group_tenant_type ON entity_group(tenant_id, entity_type);
+
+CREATE INDEX IF NOT EXISTS idx_entity_group_relation_entity ON entity_group_relation(entity_id, entity_type);
+
+CREATE INDEX IF NOT EXISTS idx_group_permission_user_group ON group_permission(tenant_id, user_group_id);
+
+CREATE INDEX IF NOT EXISTS idx_group_permission_entity_group ON group_permission(tenant_id, entity_group_id);
+
+CREATE INDEX IF NOT EXISTS idx_group_permission_role ON group_permission(role_id);

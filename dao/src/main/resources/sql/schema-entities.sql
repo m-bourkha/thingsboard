@@ -980,3 +980,59 @@ CREATE TABLE IF NOT EXISTS ai_model (
     CONSTRAINT ai_model_name_unq_key        UNIQUE (tenant_id, name),
     CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
+
+CREATE TABLE IF NOT EXISTS entity_group (
+    id              UUID          NOT NULL CONSTRAINT entity_group_pkey PRIMARY KEY,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    version         BIGINT        NOT NULL DEFAULT 1,
+    owner_type      VARCHAR(32)   NOT NULL,
+    owner_id        UUID          NOT NULL,
+    entity_type     VARCHAR(32)   NOT NULL,
+    name            VARCHAR(255)  NOT NULL,
+    group_all       BOOLEAN       NOT NULL DEFAULT FALSE,
+    public_group    BOOLEAN       NOT NULL DEFAULT FALSE,
+    configuration   JSONB,
+    additional_info JSONB,
+    external_id     UUID,
+    CONSTRAINT entity_group_name_unq_key UNIQUE (tenant_id, owner_id, entity_type, name),
+    CONSTRAINT entity_group_external_id_unq_key UNIQUE (tenant_id, external_id)
+);
+
+CREATE TABLE IF NOT EXISTS entity_group_relation (
+    group_id        UUID          NOT NULL,
+    entity_id       UUID          NOT NULL,
+    entity_type     VARCHAR(32)   NOT NULL,
+    created_time    BIGINT        NOT NULL DEFAULT (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT,
+    CONSTRAINT entity_group_relation_pkey PRIMARY KEY (group_id, entity_id),
+    CONSTRAINT fk_entity_group_relation_group FOREIGN KEY (group_id)
+        REFERENCES entity_group(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tb_role (
+    id              UUID          NOT NULL CONSTRAINT tb_role_pkey PRIMARY KEY,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    version         BIGINT        NOT NULL DEFAULT 1,
+    name            VARCHAR(255)  NOT NULL,
+    type            VARCHAR(32)   NOT NULL,
+    permissions     JSONB,
+    additional_info JSONB,
+    external_id     UUID,
+    CONSTRAINT tb_role_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT tb_role_external_id_unq_key UNIQUE (tenant_id, external_id)
+);
+
+CREATE TABLE IF NOT EXISTS group_permission (
+    id                  UUID        NOT NULL CONSTRAINT group_permission_pkey PRIMARY KEY,
+    created_time        BIGINT      NOT NULL,
+    tenant_id           UUID        NOT NULL,
+    version             BIGINT      NOT NULL DEFAULT 1,
+    user_group_id       UUID        NOT NULL,
+    role_id             UUID        NOT NULL,
+    entity_group_id     UUID,
+    entity_group_type   VARCHAR(32),
+    public_permission   BOOLEAN     NOT NULL DEFAULT FALSE,
+    external_id         UUID,
+    CONSTRAINT group_permission_external_id_unq_key UNIQUE (tenant_id, external_id)
+);
