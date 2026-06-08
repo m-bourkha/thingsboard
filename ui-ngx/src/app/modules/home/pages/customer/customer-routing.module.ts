@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { ResolveFn, Route, RouterModule, Routes } from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
@@ -25,7 +25,7 @@ import { DevicesTableConfigResolver } from '@modules/home/pages/device/devices-t
 import { AssetsTableConfigResolver } from '../asset/assets-table-config.resolver';
 import { DashboardsTableConfigResolver } from '@modules/home/pages/dashboard/dashboards-table-config.resolver';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
-import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
 import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
@@ -35,6 +35,137 @@ import { MenuId } from '@core/services/menu.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import { environment } from '@env/environment';
+import { EntityGroupService } from '@core/http/entity-group.service';
+import { CustomerService } from '@app/core/http/customer.service';
+import { EntityGroup } from '@shared/models/entity-group.model';
+import { Customer } from '@shared/models/customer.model';
+
+export const entityGroupBreadcrumbResolver: ResolveFn<EntityGroup> =
+  (route) => inject(EntityGroupService).getEntityGroup(route.params.entityGroupId);
+
+export const customerBreadcrumbResolver: ResolveFn<Customer> =
+  (route) => inject(CustomerService).getCustomer(route.params.customerId);
+
+export const entityGroupScopeBreadcrumbLabelFunction: BreadCrumbLabelFunction<any> =
+  ((route) => route.data.entityGroup?.name);
+
+export const customerScopeBreadcrumbLabelFunction: BreadCrumbLabelFunction<any> =
+  ((route, translate) =>
+    `${route.data.customer?.title ?? ''}: ${translate.instant('customer.customers')}`);
+
+function customerNode(depth: number): Route {
+  return {
+    path: ':customerId',
+    resolve: {
+      customer: customerBreadcrumbResolver
+    },
+    data: {
+      auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      breadcrumb: {
+        labelFunction: customerScopeBreadcrumbLabelFunction,
+        icon: 'supervisor_account'
+      } as BreadCrumbConfig<any>
+    },
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'customers/all'
+      },
+      {
+        path: 'customers',
+        component: RouterTabsComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          useChildrenRoutesForTabs: true
+        },
+        children: buildCustomerScopeRoutes(depth - 1, false)
+      }
+    ]
+  };
+}
+
+function buildCustomerScopeRoutes(depth: number, isRoot: boolean): Routes {
+  return [
+    {
+      path: 'all',
+      component: EntitiesTableComponent,
+      data: {
+        auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+        title: 'customer.customers',
+        breadcrumb: {
+          ...(isRoot ? { menuId: MenuId.customers_all } : {}),
+          label: 'customer.all',
+          icon: 'supervisor_account'
+        }
+      },
+      resolve: {
+        entitiesTableConfig: CustomersTableConfigResolver
+      }
+    },
+    {
+      path: 'groups',
+      data: {
+        auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+        entityType: EntityType.CUSTOMER,
+        title: 'entityGroup.customer-groups',
+        breadcrumb: {
+          ...(isRoot ? { menuId: MenuId.customers_groups } : {}),
+          label: 'entityGroup.groups',
+          icon: 'group_work'
+        }
+      },
+      children: [
+        {
+          path: '',
+          component: EntitiesTableComponent,
+          data: {
+            auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+            entityType: EntityType.CUSTOMER,
+            title: 'entityGroup.customer-groups'
+          },
+          resolve: {
+            entitiesTableConfig: EntityGroupsTableConfigResolver
+          }
+        },
+        {
+          path: ':entityGroupId',
+          resolve: {
+            entityGroup: entityGroupBreadcrumbResolver
+          },
+          data: {
+            auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+            breadcrumb: {
+              labelFunction: entityGroupScopeBreadcrumbLabelFunction,
+              icon: 'group_work'
+            } as BreadCrumbConfig<any>
+          },
+          children: [
+            {
+              path: '',
+              pathMatch: 'full',
+              redirectTo: 'customers/all'
+            },
+            {
+              path: 'customers/all',
+              component: EntitiesTableComponent,
+              data: {
+                auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+                title: 'customer.customers'
+              },
+              resolve: {
+                entitiesTableConfig: CustomersTableConfigResolver
+              }
+            },
+            ...(depth > 0 ? [customerNode(depth)] : [])
+          ]
+        }
+      ]
+    },
+    ...(depth > 0 && !isRoot ? [customerNode(depth)] : [])
+  ];
+}
 
 const routes: Routes = [
   {
@@ -55,50 +186,7 @@ const routes: Routes = [
           redirectTo: '/customers/all'
         }
       },
-      {
-        path: 'all',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          title: 'customer.customers',
-          breadcrumb: {
-            menuId: MenuId.customers_all
-          }
-        },
-        resolve: {
-          entitiesTableConfig: CustomersTableConfigResolver
-        }
-      },
-      {
-        path: 'groups',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          entityType: EntityType.CUSTOMER,
-          title: 'entityGroup.customer-groups',
-          breadcrumb: {
-            menuId: MenuId.customers_groups
-          }
-        },
-        resolve: {
-          entitiesTableConfig: EntityGroupsTableConfigResolver
-        }
-      },
-      {
-        path: 'groups/:entityGroupId/customers/all',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          title: 'customer.customers',
-          breadcrumb: {
-            label: 'entityGroup.group-customers',
-            icon: 'supervisor_account'
-          }
-        },
-        resolve: {
-          entitiesTableConfig: CustomersTableConfigResolver
-        }
-      },
+      ...buildCustomerScopeRoutes(environment.customerHierarchyMaxDepth, true),
       {
         path: ':entityId',
         component: EntityDetailsPageComponent,
