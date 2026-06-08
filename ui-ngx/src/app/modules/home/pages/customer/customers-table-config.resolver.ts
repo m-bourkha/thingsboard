@@ -17,6 +17,8 @@
 import { Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import {
   DateEntityTableColumn,
@@ -36,11 +38,14 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { EntityGroupService } from '@core/http/entity-group.service';
+import { environment } from '@env/environment';
 
 @Injectable()
 export class CustomersTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Customer> = new EntityTableConfig<Customer>();
+  private currentEntityGroupId: string | null = null;
+  private currentParentCustomerId: string | null = null;
 
   constructor(private customerService: CustomerService,
               private homeDialogs: HomeDialogsService,
@@ -70,6 +75,15 @@ export class CustomersTableConfigResolver  {
         icon: 'account_circle',
         isEnabled: (customer) => !customer.additionalInfo || !customer.additionalInfo.isPublic,
         onAction: ($event, entity) => this.manageCustomerUsers($event, entity)
+      },
+      {
+        name: this.translate.instant('customer.manage-customer-customers'),
+        icon: 'supervisor_account',
+        isEnabled: (customer) =>
+          !!this.currentEntityGroupId
+          && this.currentRecursionDepth() < environment.customerHierarchyMaxDepth
+          && (!customer.additionalInfo || !customer.additionalInfo.isPublic),
+        onAction: ($event, entity) => this.manageCustomerCustomers($event, entity)
       },
       {
         name: this.translate.instant('customer.manage-customer-assets'),
@@ -135,12 +149,29 @@ export class CustomersTableConfigResolver  {
     this.config.detailsReadonly = (customer) => customer && customer.additionalInfo && customer.additionalInfo.isPublic;
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<Customer> {
-    const entityGroupId = route.params.entityGroupId;
-    if (entityGroupId) {
-      this.config.tableTitle = this.translate.instant('entityGroup.group-customers');
+  resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<Customer>> | EntityTableConfig<Customer> {
+    const { entityGroupId, parentCustomerId } = this.collectAncestorIds(route);
+    this.currentEntityGroupId = entityGroupId;
+    this.currentParentCustomerId = parentCustomerId;
+
+    if (parentCustomerId) {
+      this.config.entitiesFetchFunction = pageLink =>
+        this.customerService.getCustomerCustomers(parentCustomerId, pageLink);
+      this.config.saveEntity = customer =>
+        this.customerService.saveSubCustomer(parentCustomerId, customer);
+      this.config.addEnabled = true;
+      this.config.entitiesDeleteEnabled = false;
+      this.config.addActionDescriptors = [];
+      return this.customerService.getCustomer(parentCustomerId).pipe(
+        map(customer => {
+          this.config.tableTitle = `${customer.title}: ${this.translate.instant('customer.customers')}`;
+          return this.config;
+        })
+      );
+    } else if (entityGroupId) {
       this.config.entitiesFetchFunction = pageLink =>
         this.entityGroupService.getEntitiesByGroup<Customer>(entityGroupId, pageLink);
+      this.config.saveEntity = customer => this.customerService.saveCustomer(customer);
       this.config.addEnabled = true;
       this.config.entitiesDeleteEnabled = false;
       this.config.addActionDescriptors = [
@@ -157,14 +188,50 @@ export class CustomersTableConfigResolver  {
           }
         }
       ];
+      return this.entityGroupService.getEntityGroup(entityGroupId).pipe(
+        map(group => {
+          this.config.tableTitle = `${group.name}: ${this.translate.instant('customer.customers')}`;
+          return this.config;
+        })
+      );
     } else {
       this.config.tableTitle = this.translate.instant('customer.customers');
       this.config.entitiesFetchFunction = pageLink => this.customerService.getCustomers(pageLink);
+      this.config.saveEntity = customer => this.customerService.saveCustomer(customer);
       this.config.addEnabled = true;
       this.config.entitiesDeleteEnabled = true;
       this.config.addActionDescriptors = [];
+      return this.config;
     }
-    return this.config;
+  }
+
+  private collectAncestorIds(route: ActivatedRouteSnapshot): { entityGroupId: string | null; parentCustomerId: string | null } {
+    let cur: ActivatedRouteSnapshot | null = route;
+    let entityGroupId: string | null = null;
+    let parentCustomerId: string | null = null;
+    while (cur) {
+      if (!entityGroupId && cur.params?.entityGroupId) {
+        entityGroupId = cur.params.entityGroupId;
+      }
+      if (!parentCustomerId && cur.params?.customerId) {
+        parentCustomerId = cur.params.customerId;
+      }
+      cur = cur.parent;
+    }
+    return { entityGroupId, parentCustomerId };
+  }
+
+  private currentRecursionDepth(): number {
+    // Count customer levels in the URL: a `customers` segment whose preceding `:customerId` is a real
+    // customer (not a group id, i.e. the segment two back is not `groups`).
+    const segments = this.router.url.split('?')[0].split('/').filter(s => !!s);
+    let depth = 0;
+    for (let i = 2; i < segments.length; i++) {
+      if (segments[i] === 'customers' && segments[i - 2] !== 'groups') {
+        depth++;
+      }
+    }
+    return depth;
   }
 
   private openCustomer($event: Event, customer: Customer) {
@@ -179,6 +246,26 @@ export class CustomersTableConfigResolver  {
       $event.stopPropagation();
     }
     this.router.navigateByUrl(`customers/${customer.id.id}/users`);
+  }
+
+  manageCustomerCustomers($event: Event, customer: Customer) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const currentUrl = this.router.url.split('?')[0];
+    let target: string;
+    if (this.currentParentCustomerId) {
+      // Already inside a sub-customers list (".../<cid>/customers/all"). Drill into the clicked
+      // sub-customer directly (customer -> customer), without re-injecting a group segment.
+      const base = currentUrl.replace(/\/all$/, '');
+      target = `${base}/${customer.id.id}/customers/all`;
+    } else {
+      // Viewing a group's customers list (".../groups/:eg/customers/all").
+      // Drill into the recursive node ".../groups/:eg/:cid/customers/all".
+      const base = currentUrl.replace(/\/customers\/all$/, '');
+      target = `${base}/${customer.id.id}/customers/all`;
+    }
+    this.router.navigateByUrl(target);
   }
 
   manageCustomerAssets($event: Event, customer: Customer) {
@@ -216,6 +303,9 @@ export class CustomersTableConfigResolver  {
         return true;
       case 'manageUsers':
         this.manageCustomerUsers(action.event, action.entity);
+        return true;
+      case 'manageCustomers':
+        this.manageCustomerCustomers(action.event, action.entity);
         return true;
       case 'manageAssets':
         this.manageCustomerAssets(action.event, action.entity);

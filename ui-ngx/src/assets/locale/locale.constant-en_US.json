@@ -1746,6 +1746,8 @@
         "add": "Add customer",
         "delete": "Delete customer",
         "manage-customer-users": "Manage customer users",
+        "manage-customer-customers": "Manage customers",
+        "sub-customers": "Sub-customers",
         "manage-customer-devices": "Manage customer devices",
         "manage-customer-dashboards": "Manage customer dashboards",
         "manage-public-devices": "Manage public devices",

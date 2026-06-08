@@ -190,6 +190,60 @@ public class CustomerController extends BaseController {
         return checkNotNull(customerService.findCustomersByTenantId(tenantId, pageLink));
     }
 
+    @ApiOperation(value = "Save a sub-customer (saveSubCustomer)",
+            notes = "Creates a new Customer and atomically attaches it to the 'All' CUSTOMER entity-group owned by the parent customer. " +
+                    "Behaves exactly like POST /customer for the customer payload, but the resulting customer becomes a sub-customer of the given parent." +
+                    TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/{customerId}/customer", method = RequestMethod.POST)
+    @ResponseBody
+    public Customer saveSubCustomer(
+            @Parameter(description = "Parent " + CUSTOMER_ID_PARAM_DESCRIPTION)
+            @PathVariable(CUSTOMER_ID) String strParentCustomerId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the customer.")
+            @RequestBody Customer customer,
+            @Parameter(description = NAME_CONFLICT_POLICY_DESC)
+            @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+            @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+            @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+            @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+            @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws Exception {
+        checkParameter(CUSTOMER_ID, strParentCustomerId);
+        CustomerId parentCustomerId = new CustomerId(toUUID(strParentCustomerId));
+        checkCustomerId(parentCustomerId, Operation.READ);
+        customer.setTenantId(getTenantId());
+        checkEntity(customer.getId(), customer, Resource.CUSTOMER);
+        return tbCustomerService.saveAsSubCustomer(customer, parentCustomerId,
+                new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
+    }
+
+    @ApiOperation(value = "Get sub-customers of a Customer (getCustomerCustomers)",
+            notes = "Returns a page of Customer objects whose owner is the given parent customer. " +
+                    "Ownership is derived from CUSTOMER-typed entity-groups owned by the parent customer." +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/customer/{customerId}/customers")
+    public PageData<Customer> getCustomerCustomers(
+            @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
+            @PathVariable(CUSTOMER_ID) String strCustomerId,
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = CUSTOMER_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "title", "email", "country", "city"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter(CUSTOMER_ID, strCustomerId);
+        CustomerId parentCustomerId = new CustomerId(toUUID(strCustomerId));
+        checkCustomerId(parentCustomerId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return checkNotNull(customerService.findCustomersByParentCustomerId(tenantId, parentCustomerId, pageLink));
+    }
+
     @ApiOperation(value = "Get Tenant Customer by Customer title (getTenantCustomer)",
             notes = "Get the Customer using Customer Title. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

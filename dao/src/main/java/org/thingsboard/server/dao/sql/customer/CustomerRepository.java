@@ -83,4 +83,25 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
             @Param("groupId") UUID groupId,
             @Param("textSearch") String textSearch,
             Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT c.* FROM customer c " +
+                   "INNER JOIN entity_group_relation egr ON egr.entity_id = c.id AND egr.entity_type = 'CUSTOMER' " +
+                   "INNER JOIN entity_group eg ON eg.id = egr.group_id " +
+                   "WHERE eg.tenant_id = :tenantId " +
+                   "  AND eg.owner_id = :parentCustomerId " +
+                   "  AND eg.entity_type = 'CUSTOMER' " +
+                   "  AND (:textSearch IS NULL OR c.title ILIKE CONCAT('%', :textSearch, '%'))",
+           countQuery = "SELECT COUNT(DISTINCT c.id) FROM customer c " +
+                        "INNER JOIN entity_group_relation egr ON egr.entity_id = c.id AND egr.entity_type = 'CUSTOMER' " +
+                        "INNER JOIN entity_group eg ON eg.id = egr.group_id " +
+                        "WHERE eg.tenant_id = :tenantId " +
+                        "  AND eg.owner_id = :parentCustomerId " +
+                        "  AND eg.entity_type = 'CUSTOMER' " +
+                        "  AND (:textSearch IS NULL OR c.title ILIKE CONCAT('%', :textSearch, '%'))",
+           nativeQuery = true)
+    Page<CustomerEntity> findByParentCustomerId(
+            @Param("tenantId") UUID tenantId,
+            @Param("parentCustomerId") UUID parentCustomerId,
+            @Param("textSearch") String textSearch,
+            Pageable pageable);
 }

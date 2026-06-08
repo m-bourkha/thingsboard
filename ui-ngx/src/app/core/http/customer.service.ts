@@ -37,6 +37,12 @@ export class CustomerService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getCustomerCustomers(parentCustomerId: string, pageLink: PageLink,
+                              config?: RequestConfig): Observable<PageData<Customer>> {
+    return this.http.get<PageData<Customer>>(`/api/customer/${parentCustomerId}/customers${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getCustomer(customerId: string, config?: RequestConfig): Observable<Customer> {
     return this.http.get<Customer>(`/api/customer/${customerId}`, defaultHttpOptionsFromConfig(config));
   }
@@ -49,6 +55,13 @@ export class CustomerService {
   public saveCustomer(customer: Customer, saveParams: SaveEntityParams, config?: RequestConfig): Observable<Customer>;
   public saveCustomer(customer: Customer, saveParamsOrConfig?: SaveEntityParams | RequestConfig, config?: RequestConfig): Observable<Customer> {
     return this.http.post<Customer>('/api/customer', customer, createDefaultHttpOptions(saveParamsOrConfig, config));
+  }
+
+  public saveSubCustomer(parentCustomerId: string, customer: Customer,
+                         saveParamsOrConfig?: SaveEntityParams | RequestConfig,
+                         config?: RequestConfig): Observable<Customer> {
+    return this.http.post<Customer>(`/api/customer/${parentCustomerId}/customer`, customer,
+      createDefaultHttpOptions(saveParamsOrConfig, config));
   }
 
   public deleteCustomer(customerId: string, config?: RequestConfig) {

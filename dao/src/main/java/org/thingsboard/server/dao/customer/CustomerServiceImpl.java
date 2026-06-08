@@ -288,6 +288,15 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     }
 
     @Override
+    public PageData<Customer> findCustomersByParentCustomerId(TenantId tenantId, CustomerId parentCustomerId, PageLink pageLink) {
+        log.trace("Executing findCustomersByParentCustomerId, tenantId [{}], parentCustomerId [{}], pageLink [{}]", tenantId, parentCustomerId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(parentCustomerId, id -> INCORRECT_CUSTOMER_ID + id);
+        Validator.validatePageLink(pageLink);
+        return customerDao.findCustomersByParentCustomerId(tenantId.getId(), parentCustomerId.getId(), pageLink);
+    }
+
+    @Override
     public void deleteByTenantId(TenantId tenantId) {
         deleteCustomersByTenantId(tenantId);
     }

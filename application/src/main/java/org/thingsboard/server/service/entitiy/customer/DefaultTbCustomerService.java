@@ -22,14 +22,18 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service
 @AllArgsConstructor
 public class DefaultTbCustomerService extends AbstractTbEntityService implements TbCustomerService {
+
+    private final EntityGroupService entityGroupService;
 
     @Override
     public Customer save(Customer customer, SecurityUser user) throws Exception {
@@ -42,6 +46,24 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
         TenantId tenantId = customer.getTenantId();
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer, nameConflictStrategy));
+            autoCommit(user, savedCustomer.getId());
+            logEntityActionService.logEntityAction(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
+            return savedCustomer;
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CUSTOMER), customer, actionType, user, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public Customer saveAsSubCustomer(Customer customer, CustomerId parentCustomerId,
+                                      NameConflictStrategy nameConflictStrategy, SecurityUser user) throws Exception {
+        ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = customer.getTenantId();
+        try {
+            Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer, nameConflictStrategy));
+            EntityGroup allGroup = entityGroupService.findOrCreateAllGroup(tenantId, parentCustomerId, EntityType.CUSTOMER);
+            entityGroupService.addEntityToGroup(allGroup.getId(), savedCustomer.getId());
             autoCommit(user, savedCustomer.getId());
             logEntityActionService.logEntityAction(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
             return savedCustomer;

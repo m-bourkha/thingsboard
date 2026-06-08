@@ -29,6 +29,8 @@ import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -36,6 +38,11 @@ import java.util.UUID;
 @Entity
 @Table(name = ModelConstants.CUSTOMER_TABLE_NAME)
 public final class CustomerEntity extends BaseVersionedEntity<Customer> {
+
+    public static final Map<String, String> customerColumnMap = new HashMap<>();
+    static {
+        customerColumnMap.put("createdTime", "created_time");
+    }
 
     @Column(name = ModelConstants.CUSTOMER_TENANT_ID_PROPERTY)
     private UUID tenantId;

@@ -16,8 +16,8 @@
 
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, switchMap, take } from 'rxjs/operators';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectAuthUser } from '@core/auth/auth.selectors';
@@ -30,6 +30,7 @@ import {
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityGroup } from '@shared/models/entity-group.model';
 import { EntityGroupService } from '@core/http/entity-group.service';
+import { CustomerService } from '@core/http/customer.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
@@ -42,19 +43,23 @@ export class EntityGroupsTableConfigResolver implements Resolve<EntityTableConfi
   constructor(
     private store: Store<AppState>,
     private entityGroupService: EntityGroupService,
+    private customerService: CustomerService,
     private translate: TranslateService,
     private router: Router
   ) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<EntityGroup>> {
     const entityType = route.data.entityType as EntityType;
+    const parentCustomerId = this.findAncestorParam(route, 'customerId');
 
     return this.store.pipe(
       select(selectAuthUser),
       take(1),
       map(authUser => {
         let ownerId: EntityId;
-        if (authUser.authority === Authority.CUSTOMER_USER) {
+        if (parentCustomerId) {
+          ownerId = new CustomerId(parentCustomerId);
+        } else if (authUser.authority === Authority.CUSTOMER_USER) {
           ownerId = new CustomerId(authUser.customerId);
         } else {
           ownerId = new TenantId(authUser.tenantId);
@@ -104,10 +109,11 @@ export class EntityGroupsTableConfigResolver implements Resolve<EntityTableConfi
         const entityTypePlural = entityType.toLowerCase() + 's';
         const openGroup = ($event: Event, entity: EntityGroup) => {
           if ($event) { $event.stopPropagation(); }
-          this.router.navigateByUrl(`/${entityTypePlural}/groups/${entity.id.id}/${entityTypePlural}/all`);
+          const base = this.router.url.split('?')[0].replace(/\/groups$/, '');
+          this.router.navigateByUrl(`${base}/groups/${entity.id.id}/${entityTypePlural}/all`);
         };
 
-        config.cellActionDescriptors = [
+      config.cellActionDescriptors = [
           {
             name: this.translate.instant('entityGroup.open'),
             icon: 'list',
@@ -130,7 +136,30 @@ export class EntityGroupsTableConfigResolver implements Resolve<EntityTableConfi
         config.componentsData = { groupType: entityType, ownerId };
 
         return config;
+      }),
+      switchMap(config => {
+        if (parentCustomerId) {
+          return this.customerService.getCustomer(parentCustomerId).pipe(
+            map(customer => {
+              config.tableTitle =
+                `${customer.title}: ${this.translate.instant(`entityGroup.${entityType.toLowerCase()}-groups`)}`;
+              return config;
+            })
+          );
+        }
+        return of(config);
       })
     );
+  }
+
+  private findAncestorParam(route: ActivatedRouteSnapshot, paramName: string): string | null {
+    let cur: ActivatedRouteSnapshot | null = route;
+    while (cur) {
+      if (cur.params?.[paramName]) {
+        return cur.params[paramName];
+      }
+      cur = cur.parent;
+    }
+    return null;
   }
 }
