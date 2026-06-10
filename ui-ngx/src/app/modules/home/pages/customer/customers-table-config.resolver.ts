@@ -14,14 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  DateEntityTableColumn,
+  CellActionDescriptor,
+  DateEntityTableColumn, EntityColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -39,6 +40,12 @@ import { AppState } from '@core/core.state';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { EntityGroupService } from '@core/http/entity-group.service';
 import { environment } from '@env/environment';
+import { defaultEntityGroupColumns, EntityGroupActionConfiguration } from '@shared/models/entity-group.model';
+import {
+  buildEntityGroupTableColumns,
+  entityGroupTableSortOrder
+} from '@home/components/group/entity-group-table-columns.utils';
+import { SortOrder } from '@shared/models/page/sort-order';
 
 @Injectable()
 export class CustomersTableConfigResolver  {
@@ -46,6 +53,11 @@ export class CustomersTableConfigResolver  {
   private readonly config: EntityTableConfig<Customer> = new EntityTableConfig<Customer>();
   private currentEntityGroupId: string | null = null;
   private currentParentCustomerId: string | null = null;
+  // The manually-defined default columns / sort order / actions, used outside of a group context. Captured because
+  // `this.config` is a reused singleton whose columns/actions we swap per navigation (group vs non-group).
+  private readonly defaultColumns: EntityColumn<Customer>[];
+  private readonly defaultSortOrder: SortOrder;
+  private defaultCellActionDescriptors: Array<CellActionDescriptor<Customer>>;
 
   constructor(private customerService: CustomerService,
               private homeDialogs: HomeDialogsService,
@@ -53,7 +65,8 @@ export class CustomersTableConfigResolver  {
               private datePipe: DatePipe,
               private router: Router,
               private store: Store<AppState>,
-              private entityGroupService: EntityGroupService) {
+              private entityGroupService: EntityGroupService,
+              private injector: Injector) {
 
     this.config.entityType = EntityType.CUSTOMER;
     this.config.entityComponent = CustomerComponent;
@@ -69,6 +82,9 @@ export class CustomersTableConfigResolver  {
       new EntityTableColumn<Customer>('country', 'contact.country', '25%'),
       new EntityTableColumn<Customer>('city', 'contact.city', '25%')
     );
+    // Snapshot defaults so non-group navigations can restore them after a group view has swapped them.
+    this.defaultColumns = [...this.config.columns];
+    this.defaultSortOrder = this.config.defaultSortOrder;
     this.config.cellActionDescriptors.push(
       {
         name: this.translate.instant('customer.manage-customer-users'),
@@ -134,6 +150,8 @@ export class CustomersTableConfigResolver  {
       );
     }
 
+    this.defaultCellActionDescriptors = [...this.config.cellActionDescriptors];
+
     this.config.deleteEntityTitle = customer => this.translate.instant('customer.delete-customer-title', { customerTitle: customer.title });
     this.config.deleteEntityContent = () => this.translate.instant('customer.delete-customer-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('customer.delete-customers-title', {count});
@@ -150,11 +168,12 @@ export class CustomersTableConfigResolver  {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<Customer>> | EntityTableConfig<Customer> {
-    const { entityGroupId, parentCustomerId } = this.collectAncestorIds(route);
+    const { entityGroupId, parentCustomerId, immediateContext } = this.collectAncestorIds(route);
     this.currentEntityGroupId = entityGroupId;
     this.currentParentCustomerId = parentCustomerId;
 
-    if (parentCustomerId) {
+    if (immediateContext === 'customer') {
+      this.restoreDefaultColumns();
       this.config.entitiesFetchFunction = pageLink =>
         this.customerService.getCustomerCustomers(parentCustomerId, pageLink);
       this.config.saveEntity = customer =>
@@ -168,7 +187,7 @@ export class CustomersTableConfigResolver  {
           return this.config;
         })
       );
-    } else if (entityGroupId) {
+    } else if (immediateContext === 'group') {
       this.config.entitiesFetchFunction = pageLink =>
         this.entityGroupService.getEntitiesByGroup<Customer>(entityGroupId, pageLink);
       this.config.saveEntity = customer => this.customerService.saveCustomer(customer);
@@ -191,10 +210,23 @@ export class CustomersTableConfigResolver  {
       return this.entityGroupService.getEntityGroup(entityGroupId).pipe(
         map(group => {
           this.config.tableTitle = `${group.name}: ${this.translate.instant('customer.customers')}`;
+          // Drive columns from the group's saved configuration (Columns tab), falling back to defaults.
+          const configured = group.configuration?.columns?.length
+            ? group.configuration.columns
+            : defaultEntityGroupColumns(EntityType.CUSTOMER);
+          this.config.columns = buildEntityGroupTableColumns(configured, EntityType.CUSTOMER, this.datePipe);
+          this.config.defaultSortOrder = entityGroupTableSortOrder(configured) ?? this.defaultSortOrder;
+          // Drive cell action descriptors: default built-in actions + group-configured ones (Actions tab).
+          const configuredActions = (group.configuration?.actions ?? []).filter(a => a.source === 'CELL_BUTTON');
+          this.config.cellActionDescriptors = [
+            ...this.defaultCellActionDescriptors,
+            ...configuredActions.map(a => this.buildCellActionDescriptor(a))
+          ];
           return this.config;
         })
       );
     } else {
+      this.restoreDefaultColumns();
       this.config.tableTitle = this.translate.instant('customer.customers');
       this.config.entitiesFetchFunction = pageLink => this.customerService.getCustomers(pageLink);
       this.config.saveEntity = customer => this.customerService.saveCustomer(customer);
@@ -205,20 +237,65 @@ export class CustomersTableConfigResolver  {
     }
   }
 
-  private collectAncestorIds(route: ActivatedRouteSnapshot): { entityGroupId: string | null; parentCustomerId: string | null } {
+  private buildCellActionDescriptor(action: EntityGroupActionConfiguration): CellActionDescriptor<Customer> {
+    return {
+      name: action.name,
+      icon: action.icon || 'more_horiz',
+      isEnabled: () => true,
+      onAction: ($event: MouseEvent, entity: Customer) => {
+        if ($event) {
+          $event.stopPropagation();
+        }
+        if (action.type === 'OPEN') {
+          const url = action.payload || '';
+          if (url) {
+            window.open(url, '_blank');
+          }
+        } else if (action.type === 'CUSTOM_ACTION' || action.type === 'RUN_JS') {
+          const fn = action.customFunction || action.payload || '';
+          if (fn) {
+            try {
+              // eslint-disable-next-line no-new-func
+              new Function('$event', '$injector', 'entityId', 'entityName', 'servicesmap', 'tableConfig', fn)(
+                $event, this.injector, entity.id?.id, entity.name, {}, this.config
+              );
+            } catch (e) {
+              console.error('Entity group action error:', e);
+            }
+          }
+        }
+      }
+    };
+  }
+
+  private restoreDefaultColumns(): void {
+    this.config.columns = [...this.defaultColumns];
+    this.config.defaultSortOrder = this.defaultSortOrder;
+    this.config.cellActionDescriptors = [...this.defaultCellActionDescriptors];
+  }
+
+  private collectAncestorIds(route: ActivatedRouteSnapshot): {
+    entityGroupId: string | null;
+    parentCustomerId: string | null;
+    immediateContext: 'group' | 'customer' | 'none';
+  } {
     let cur: ActivatedRouteSnapshot | null = route;
     let entityGroupId: string | null = null;
     let parentCustomerId: string | null = null;
+    let immediateContext: 'group' | 'customer' | 'none' = 'none';
     while (cur) {
-      if (!entityGroupId && cur.params?.entityGroupId) {
+      const path = cur.routeConfig?.path ?? '';
+      if (!entityGroupId && path.includes(':entityGroupId') && cur.params?.entityGroupId) {
         entityGroupId = cur.params.entityGroupId;
+        if (immediateContext === 'none') { immediateContext = 'group'; }
       }
-      if (!parentCustomerId && cur.params?.customerId) {
+      if (!parentCustomerId && path.includes(':customerId') && cur.params?.customerId) {
         parentCustomerId = cur.params.customerId;
+        if (immediateContext === 'none') { immediateContext = 'customer'; }
       }
       cur = cur.parent;
     }
-    return { entityGroupId, parentCustomerId };
+    return { entityGroupId, parentCustomerId, immediateContext };
   }
 
   private currentRecursionDepth(): number {

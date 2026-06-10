@@ -3385,7 +3385,56 @@
         "group-assets": "Group assets",
         "no-entity-groups-text": "No entity groups found",
         "search": "Search entity groups",
-        "selected-entity-groups": "{ count, plural, =1 {1 entity group} other {# entity groups} } selected"
+        "selected-entity-groups": "{ count, plural, =1 {1 entity group} other {# entity groups} } selected",
+        "columns": "Columns",
+        "settings": "Settings",
+        "actions": "Actions",
+        "column": {
+            "column-type": "Column type",
+            "value": "Value",
+            "key": "Key",
+            "title": "Title",
+            "sort-order": "Default sort order",
+            "mobile-hidden": "Mobile hidden",
+            "add": "Add column",
+            "edit": "Edit column",
+            "no-columns": "No columns configured. The default columns will be used.",
+            "type-entity-field": "Entity field",
+            "type-client-attribute": "Client attribute",
+            "type-shared-attribute": "Shared attribute",
+            "type-server-attribute": "Server attribute",
+            "type-timeseries": "Latest telemetry"
+        },
+        "sort-order": {
+            "none": "None",
+            "asc": "Ascending",
+            "desc": "Descending"
+        },
+        "setting": {
+            "enable-search": "Enable search",
+            "enable-add": "Enable adding entities",
+            "enable-delete": "Enable deleting entities",
+            "enable-bulk-ops": "Enable bulk operations"
+        },
+        "action": {
+            "add": "Add action",
+            "edit": "Edit action",
+            "source": "Action source",
+            "source-required": "Action source is required.",
+            "source-cell-button": "Action cell button",
+            "source-header-button": "Header button",
+            "name": "Name",
+            "name-required": "Action name is required.",
+            "icon": "Icon",
+            "type": "Action",
+            "type-required": "Action type is required.",
+            "payload": "Payload",
+            "type-open": "Open URL",
+            "type-run-js": "Execute JavaScript",
+            "type-custom-action": "Custom action",
+            "custom-function": "Custom action function",
+            "no-actions": "No actions configured."
+        }
     },
     "event": {
         "event-type": "Event type",

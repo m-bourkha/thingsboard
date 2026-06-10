@@ -29,10 +29,19 @@ public class EntityGroupConfiguration {
 
     @Data
     public static class EntityGroupColumnConfiguration {
+        private ColumnType type;
         private String key;
-        private String label;
-        private boolean sortable;
-        private boolean defaultVisible;
+        private String title;
+        private SortOrder sortOrder;
+        private boolean mobileHide;
+
+        public enum ColumnType {
+            ENTITY_FIELD, CLIENT_ATTRIBUTE, SHARED_ATTRIBUTE, SERVER_ATTRIBUTE, TIMESERIES
+        }
+
+        public enum SortOrder {
+            NONE, ASC, DESC
+        }
     }
 
     @Data
@@ -45,13 +54,19 @@ public class EntityGroupConfiguration {
 
     @Data
     public static class EntityGroupActionConfiguration {
+        private ActionSource source;
         private String name;
         private String icon;
         private ActionType type;
+        private String customFunction;
         private JsonNode payload;
 
+        public enum ActionSource {
+            CELL_BUTTON, HEADER_BUTTON
+        }
+
         public enum ActionType {
-            OPEN, RUN_JS
+            OPEN, RUN_JS, CUSTOM_ACTION
         }
     }
 }
