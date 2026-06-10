@@ -214,8 +214,19 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
         (entityTabs) => {
           if (entityTabs) {
             if (this.viewInited) {
+              const previousSelectedTab = this.selectedTab;
               this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...entityTabs]);
               this.matTabGroup._tabs.notifyOnChanges();
+              // Resetting the dynamic tab set makes MatTabGroup drop the active selection back to the
+              // first tab (Details). Re-assert the previously selected tab (clamped) on a macrotask so it
+              // runs after Material's own post-reset realignment, keeping the user on the same tab when
+              // the tab set changes (e.g. edit toggle hiding the data tabs).
+              const restoredIndex = Math.max(0, Math.min(previousSelectedTab, this.inclusiveTabs.length + entityTabs.length - 1));
+              setTimeout(() => {
+                this.selectedTab = restoredIndex;
+                this.matTabGroup.selectedIndex = restoredIndex;
+                this.cd.detectChanges();
+              });
             } else {
               this.pendingTabs = entityTabs;
             }

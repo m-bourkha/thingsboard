@@ -36,6 +36,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { Authority } from '@shared/models/authority.enum';
 import { EntityGroupComponent } from '@home/components/group/entity-group.component';
+import { EntityGroupTabsComponent } from '@home/components/group/entity-group-tabs.component';
 
 @Injectable()
 export class EntityGroupsTableConfigResolver implements Resolve<EntityTableConfig<EntityGroup>> {
@@ -68,6 +69,10 @@ export class EntityGroupsTableConfigResolver implements Resolve<EntityTableConfi
         const config = new EntityTableConfig<EntityGroup>();
         config.entityType = EntityType.ENTITY_GROUP;
         config.entityComponent = EntityGroupComponent;
+        config.entityTabsComponent = EntityGroupTabsComponent;
+        // Keep the tab bar visible in edit mode (default true would hide all tabs and force the
+        // Details tab) so Columns/Settings/Actions stay editable in their own tabs.
+        config.hideDetailsTabsOnEdit = false;
         config.entityTranslations = entityTypeTranslations.get(EntityType.ENTITY_GROUP);
         config.entityResources = entityTypeResources.get(EntityType.ENTITY_GROUP);
         config.tableTitle = this.translate.instant(`entityGroup.${entityType.toLowerCase()}-groups`);

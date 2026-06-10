@@ -210,6 +210,12 @@ import {
 } from '@home/components/group/grouped-entities-table-config.resolver';
 import { EntityGroupsTabComponent } from '@home/components/group/entity-groups-tab.component';
 import { EntityGroupComponent } from '@home/components/group/entity-group.component';
+import { EntityGroupTabsComponent } from '@home/components/group/entity-group-tabs.component';
+import { EntityGroupColumnsComponent } from '@home/components/group/entity-group-columns.component';
+import { EntityGroupSettingsComponent } from '@home/components/group/entity-group-settings.component';
+import { EntityGroupActionsComponent } from '@home/components/group/entity-group-actions.component';
+import { EntityGroupActionDialogComponent } from '@home/components/group/entity-group-action-dialog.component';
+import { EntityGroupColumnDialogComponent } from '@home/components/group/entity-group-column-dialog.component';
 
 @NgModule({
   declarations:
@@ -369,7 +375,13 @@ import { EntityGroupComponent } from '@home/components/group/entity-group.compon
       AuditLogFilterComponent,
       EventsDialogComponent,
       EntityGroupsTabComponent,
-      EntityGroupComponent
+      EntityGroupComponent,
+      EntityGroupTabsComponent,
+      EntityGroupColumnsComponent,
+      EntityGroupSettingsComponent,
+      EntityGroupActionsComponent,
+      EntityGroupActionDialogComponent,
+      EntityGroupColumnDialogComponent
     ],
   imports: [
     CommonModule,

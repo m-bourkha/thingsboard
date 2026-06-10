@@ -20,7 +20,14 @@ import { AppState } from '@core/core.state';
 import {ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { EntityGroup } from '@shared/models/entity-group.model';
+import {
+  defaultEntityGroupColumns,
+  defaultEntityGroupSettings,
+
+  EntityGroup,
+  EntityGroupColumnConfiguration,
+  EntityGroupSettings
+} from '@shared/models/entity-group.model';
 import {MatError, MatFormField, MatLabel} from "@angular/material/input";
 import {TranslatePipe} from "@ngx-translate/core";
 import {AsyncPipe} from "@angular/common";
@@ -57,6 +64,11 @@ export class EntityGroupComponent extends EntityComponent<EntityGroup> {
       publicGroup: [entity ? entity.publicGroup : false],
       additionalInfo: this.fb.group({
         description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
+      }),
+      configuration: this.fb.group({
+        columns: [this.columnsValue(entity)],
+        settings: this.fb.group(this.settingsValue(entity)),
+        actions: [entity?.configuration?.actions ?? []]
       })
     });
   }
@@ -67,7 +79,21 @@ export class EntityGroupComponent extends EntityComponent<EntityGroup> {
       publicGroup: entity.publicGroup,
       additionalInfo: {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
+      },
+      configuration: {
+        columns: this.columnsValue(entity),
+        settings: this.settingsValue(entity),
+        actions: entity?.configuration?.actions ?? []
       }
     });
+  }
+
+  private settingsValue(entity: EntityGroup): EntityGroupSettings {
+    return { ...defaultEntityGroupSettings(), ...(entity?.configuration?.settings ?? {}) };
+  }
+
+  private columnsValue(entity: EntityGroup): EntityGroupColumnConfiguration[] {
+    const columns = entity?.configuration?.columns;
+    return columns && columns.length ? columns : defaultEntityGroupColumns(entity?.type);
   }
 }

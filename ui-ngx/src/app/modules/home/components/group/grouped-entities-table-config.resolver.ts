@@ -16,13 +16,24 @@
 
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { EntityTableConfig, EntityTableColumn } from '@home/models/entity/entities-table-config.models';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import {
+  EntityTableConfig
+} from '@home/models/entity/entities-table-config.models';
 import { EntityGroupService } from '@core/http/entity-group.service';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityType, entityTypeTranslations, entityTypeResources } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
+import {
+  defaultEntityGroupColumns,
+  EntityGroup
+} from '@shared/models/entity-group.model';
+import {
+  buildEntityGroupTableColumns,
+  entityGroupTableSortOrder
+} from '@home/components/group/entity-group-table-columns.utils';
 
 @Injectable()
 export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableConfig<BaseData<HasId>>> {
@@ -50,15 +61,24 @@ export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableCo
     config.entitiesFetchFunction = pageLink =>
       this.entityGroupService.getEntitiesByGroup(entityGroupId, pageLink);
 
-    if (entityType === EntityType.CUSTOMER) {
-      config.columns.push(
-        new EntityTableColumn<any>('title', 'customer.title', '25%', entity => entity.title),
-        new EntityTableColumn<any>('email', 'contact.email', '25%', entity => entity.email),
-        new EntityTableColumn<any>('country', 'contact.country', '25%', entity => entity.country),
-        new EntityTableColumn<any>('city', 'contact.city', '25%', entity => entity.city)
-      );
-    }
+    return this.entityGroupService.getEntityGroup(entityGroupId).pipe(
+      map(group => {
+        this.buildColumns(config, entityType, group);
+        return config;
+      })
+    );
+  }
 
-    return of(config);
+  private buildColumns(config: EntityTableConfig<BaseData<HasId>>, entityType: EntityType, group: EntityGroup): void {
+    const savedColumns = group?.configuration?.columns ?? [];
+    // Use the same default columns the Columns tab seeds with, so the tab and grid stay consistent.
+    const configuredColumns = savedColumns.length ? savedColumns : defaultEntityGroupColumns(entityType);
+
+    config.columns.push(...buildEntityGroupTableColumns(configuredColumns, entityType, this.datePipe));
+
+    const sortOrder = entityGroupTableSortOrder(configuredColumns);
+    if (sortOrder) {
+      config.defaultSortOrder = sortOrder;
+    }
   }
 }
