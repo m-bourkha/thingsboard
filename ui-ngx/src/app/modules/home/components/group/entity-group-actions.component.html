@@ -1,0 +1,80 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-entity-group-actions flex flex-col">
+
+  <div class="tb-action-header flex flex-row items-center" *ngIf="actions.length">
+    <div class="tb-act-handle"></div>
+    <div class="tb-act-index">#</div>
+    <div class="tb-act-source">{{ 'entityGroup.action.source' | translate }}</div>
+    <div class="tb-act-name">{{ 'entityGroup.action.name' | translate }}</div>
+    <div class="tb-act-icon">{{ 'entityGroup.action.icon' | translate }}</div>
+    <div class="tb-act-type">{{ 'entityGroup.action.type' | translate }}</div>
+    <div class="tb-act-actions"></div>
+  </div>
+
+  <div class="tb-no-data" *ngIf="!actions.length" translate>entityGroup.action.no-actions</div>
+
+  <div class="tb-actions-list" cdkDropList cdkDropListOrientation="vertical"
+       [cdkDropListDisabled]="disabled"
+       (cdkDropListDropped)="actionDrop($event)">
+    <div class="tb-action-row flex flex-row items-center" cdkDrag
+         *ngFor="let action of actions; let i = index">
+      <div class="tb-act-handle">
+        <button type="button" mat-icon-button cdkDragHandle
+                [disabled]="disabled"
+                matTooltip="{{ 'action.drag' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>drag_indicator</mat-icon>
+        </button>
+      </div>
+      <div class="tb-act-index">{{ i + 1 }}</div>
+      <div class="tb-act-source">{{ entityGroupActionSourceTranslations.get(action.source) | translate }}</div>
+      <div class="tb-act-name">{{ action.name }}</div>
+      <div class="tb-act-icon flex items-center justify-center">
+        <mat-icon>{{ action.icon || 'more_horiz' }}</mat-icon>
+      </div>
+      <div class="tb-act-type">{{ entityGroupActionTypeTranslations.get(action.type) | translate }}</div>
+      <div class="tb-act-actions flex flex-row items-center">
+        <button type="button" mat-icon-button
+                [disabled]="disabled"
+                (click)="editAction(i)"
+                matTooltip="{{ 'action.edit' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button type="button" mat-icon-button
+                [disabled]="disabled"
+                (click)="removeAction(i)"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-add-action">
+    <button type="button" mat-stroked-button color="primary"
+            [disabled]="disabled"
+            (click)="addAction()">
+      <mat-icon>add</mat-icon>
+      <span translate>entityGroup.action.add</span>
+    </button>
+  </div>
+
+</section>
