@@ -55,6 +55,11 @@ public class Role extends BaseData<RoleId>
     @Schema(description = "Role type: GENERIC (tenant-wide) or GROUP (scoped to entity group)")
     private RoleType type;
 
+    @NoXss
+    @Length(fieldName = "description")
+    @Schema(description = "Description of the role")
+    private String description;
+
     private transient JsonNode permissions;
     @JsonIgnore
     private byte[] permissionsBytes;
@@ -78,6 +83,7 @@ public class Role extends BaseData<RoleId>
         this.tenantId = role.getTenantId();
         this.name = role.getName();
         this.type = role.getType();
+        this.description = role.getDescription();
         setPermissions(role.getPermissions());
         this.version = role.getVersion();
         this.externalId = role.getExternalId();
@@ -108,6 +114,14 @@ public class Role extends BaseData<RoleId>
 
     public void setType(RoleType type) {
         this.type = type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public JsonNode getPermissions() {
@@ -146,11 +160,12 @@ public class Role extends BaseData<RoleId>
         return Objects.equals(tenantId, role.tenantId)
                 && Objects.equals(name, role.name)
                 && type == role.type
+                && Objects.equals(description, role.description)
                 && Arrays.equals(permissionsBytes, role.permissionsBytes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), tenantId, name, type, Arrays.hashCode(permissionsBytes));
+        return Objects.hash(super.hashCode(), tenantId, name, type, description, Arrays.hashCode(permissionsBytes));
     }
 }

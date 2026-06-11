@@ -46,6 +46,9 @@ public final class RoleEntity extends BaseVersionedEntity<Role> {
     @Column(name = "type")
     private String type;
 
+    @Column(name = "description")
+    private String description;
+
     @Convert(converter = JsonConverter.class)
     @Column(name = "permissions", columnDefinition = "jsonb")
     private JsonNode permissions;
@@ -62,6 +65,7 @@ public final class RoleEntity extends BaseVersionedEntity<Role> {
         this.tenantId = role.getTenantId().getId();
         this.name = role.getName();
         this.type = role.getType() != null ? role.getType().name() : null;
+        this.description = role.getDescription();
         this.permissions = role.getPermissions();
         if (role.getExternalId() != null) {
             this.externalId = role.getExternalId().getId();
@@ -78,6 +82,7 @@ public final class RoleEntity extends BaseVersionedEntity<Role> {
         if (type != null) {
             role.setType(RoleType.valueOf(type));
         }
+        role.setDescription(description);
         role.setPermissions(permissions);
         if (externalId != null) {
             role.setExternalId(new RoleId(externalId));

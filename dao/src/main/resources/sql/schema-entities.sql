@@ -1016,6 +1016,7 @@ CREATE TABLE IF NOT EXISTS tb_role (
     version         BIGINT        NOT NULL DEFAULT 1,
     name            VARCHAR(255)  NOT NULL,
     type            VARCHAR(32)   NOT NULL,
+    description     VARCHAR,
     permissions     JSONB,
     additional_info JSONB,
     external_id     UUID,
