@@ -126,6 +126,8 @@ CREATE INDEX IF NOT EXISTS idx_entity_group_tenant_type ON entity_group(tenant_i
 
 CREATE INDEX IF NOT EXISTS idx_entity_group_relation_entity ON entity_group_relation(entity_id, entity_type);
 
+CREATE INDEX IF NOT EXISTS idx_role_tenant_id ON tb_role(tenant_id);
+
 CREATE INDEX IF NOT EXISTS idx_group_permission_user_group ON group_permission(tenant_id, user_group_id);
 
 CREATE INDEX IF NOT EXISTS idx_group_permission_entity_group ON group_permission(tenant_id, entity_group_id);
