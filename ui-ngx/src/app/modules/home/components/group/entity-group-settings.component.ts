@@ -16,6 +16,11 @@
 
 import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
+import {
+  EntityGroupOpenDetailsOn,
+  entityGroupOpenDetailsOnTranslations,
+  entityGroupOpenDetailsOnValues
+} from '@shared/models/entity-group.model';
 
 @Component({
   selector: 'tb-entity-group-settings',
@@ -27,4 +32,6 @@ export class EntityGroupSettingsComponent {
 
   @Input() settingsForm: UntypedFormGroup;
 
+  readonly openDetailsOnValues: EntityGroupOpenDetailsOn[] = entityGroupOpenDetailsOnValues;
+  readonly openDetailsOnTranslations = entityGroupOpenDetailsOnTranslations;
 }

@@ -40,7 +40,12 @@ import { AppState } from '@core/core.state';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { EntityGroupService } from '@core/http/entity-group.service';
 import { environment } from '@env/environment';
-import { defaultEntityGroupColumns, EntityGroupActionConfiguration } from '@shared/models/entity-group.model';
+import {
+  defaultEntityGroupColumns,
+  defaultEntityGroupSettings,
+  EntityGroupActionConfiguration,
+  EntityGroupSettings
+} from '@shared/models/entity-group.model';
 import {
   buildEntityGroupTableColumns,
   entityGroupTableSortOrder
@@ -53,6 +58,7 @@ export class CustomersTableConfigResolver  {
   private readonly config: EntityTableConfig<Customer> = new EntityTableConfig<Customer>();
   private currentEntityGroupId: string | null = null;
   private currentParentCustomerId: string | null = null;
+  private currentGroupSettings: EntityGroupSettings | null = null;
   // The manually-defined default columns / sort order / actions, used outside of a group context. Captured because
   // `this.config` is a reused singleton whose columns/actions we swap per navigation (group vs non-group).
   private readonly defaultColumns: EntityColumn<Customer>[];
@@ -89,13 +95,16 @@ export class CustomersTableConfigResolver  {
       {
         name: this.translate.instant('customer.manage-customer-users'),
         icon: 'account_circle',
-        isEnabled: (customer) => !customer.additionalInfo || !customer.additionalInfo.isPublic,
+        isEnabled: (customer) =>
+          (this.currentGroupSettings?.enableUsersManagement ?? true) &&
+          (!customer.additionalInfo || !customer.additionalInfo.isPublic),
         onAction: ($event, entity) => this.manageCustomerUsers($event, entity)
       },
       {
         name: this.translate.instant('customer.manage-customer-customers'),
         icon: 'supervisor_account',
         isEnabled: (customer) =>
+          (this.currentGroupSettings?.enableCustomersManagement ?? true) &&
           !!this.currentEntityGroupId
           && this.currentRecursionDepth() < environment.customerHierarchyMaxDepth
           && (!customer.additionalInfo || !customer.additionalInfo.isPublic),
@@ -109,7 +118,7 @@ export class CustomersTableConfigResolver  {
           : this.translate.instant('customer.manage-customer-assets');
         },
         icon: 'domain',
-        isEnabled: (customer) => true,
+        isEnabled: () => this.currentGroupSettings?.enableAssetsManagement ?? true,
         onAction: ($event, entity) => this.manageCustomerAssets($event, entity)
       },
       {
@@ -120,7 +129,7 @@ export class CustomersTableConfigResolver  {
             : this.translate.instant('customer.manage-customer-devices');
         },
         icon: 'devices_other',
-        isEnabled: (customer) => true,
+        isEnabled: () => this.currentGroupSettings?.enableDevicesManagement ?? true,
         onAction: ($event, entity) => this.manageCustomerDevices($event, entity)
       },
       {
@@ -131,7 +140,7 @@ export class CustomersTableConfigResolver  {
             : this.translate.instant('customer.manage-customer-dashboards');
         },
         icon: 'dashboard',
-        isEnabled: (customer) => true,
+        isEnabled: () => this.currentGroupSettings?.enableDashboardsManagement ?? true,
         onAction: ($event, entity) => this.manageCustomerDashboards($event, entity)
       });
     if (authState.edgesSupportEnabled) {
@@ -144,7 +153,7 @@ export class CustomersTableConfigResolver  {
               : this.translate.instant('customer.manage-customer-edges');
           },
           icon: 'router',
-          isEnabled: (customer) => true,
+          isEnabled: () => this.currentGroupSettings?.enableEdgesManagement ?? true,
           onAction: ($event, entity) => this.manageCustomerEdges($event, entity)
         }
       );
@@ -173,6 +182,7 @@ export class CustomersTableConfigResolver  {
     this.currentParentCustomerId = parentCustomerId;
 
     if (immediateContext === 'customer') {
+      this.currentGroupSettings = null;
       this.restoreDefaultColumns();
       this.config.entitiesFetchFunction = pageLink =>
         this.customerService.getCustomerCustomers(parentCustomerId, pageLink);
@@ -209,14 +219,33 @@ export class CustomersTableConfigResolver  {
       ];
       return this.entityGroupService.getEntityGroup(entityGroupId).pipe(
         map(group => {
-          this.config.tableTitle = `${group.name}: ${this.translate.instant('customer.customers')}`;
+          const settings: EntityGroupSettings = {
+            ...defaultEntityGroupSettings(),
+            ...(group.configuration?.settings ?? {})
+          };
+          this.currentGroupSettings = settings;
+
+          // Table title: use custom title from settings if set, otherwise default.
+          this.config.tableTitle = settings.tableTitle?.trim()
+            ? settings.tableTitle
+            : `${group.name}: ${this.translate.instant('customer.customers')}`;
+
+          // Pagination settings.
+          this.config.displayPagination = settings.displayPagination;
+          this.config.defaultPageSize   = settings.defaultPageSize;
+
+          // Details panel behaviour.
+          this.config.detailsPanelEnabled = settings.openDetailsOn !== 'DISABLED';
+
           // Drive columns from the group's saved configuration (Columns tab), falling back to defaults.
           const configured = group.configuration?.columns?.length
             ? group.configuration.columns
             : defaultEntityGroupColumns(EntityType.CUSTOMER);
           this.config.columns = buildEntityGroupTableColumns(configured, EntityType.CUSTOMER, this.datePipe);
           this.config.defaultSortOrder = entityGroupTableSortOrder(configured) ?? this.defaultSortOrder;
+
           // Drive cell action descriptors: default built-in actions + group-configured ones (Actions tab).
+          // The isEnabled closures on defaultCellActionDescriptors already read this.currentGroupSettings.
           const configuredActions = (group.configuration?.actions ?? []).filter(a => a.source === 'CELL_BUTTON');
           this.config.cellActionDescriptors = [
             ...this.defaultCellActionDescriptors,
@@ -226,6 +255,7 @@ export class CustomersTableConfigResolver  {
         })
       );
     } else {
+      this.currentGroupSettings = null;
       this.restoreDefaultColumns();
       this.config.tableTitle = this.translate.instant('customer.customers');
       this.config.entitiesFetchFunction = pageLink => this.customerService.getCustomers(pageLink);
@@ -272,6 +302,9 @@ export class CustomersTableConfigResolver  {
     this.config.columns = [...this.defaultColumns];
     this.config.defaultSortOrder = this.defaultSortOrder;
     this.config.cellActionDescriptors = [...this.defaultCellActionDescriptors];
+    this.config.displayPagination = true;
+    this.config.defaultPageSize = 10;
+    this.config.detailsPanelEnabled = true;
   }
 
   private collectAncestorIds(route: ActivatedRouteSnapshot): {

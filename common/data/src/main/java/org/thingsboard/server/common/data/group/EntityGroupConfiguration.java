@@ -50,6 +50,20 @@ public class EntityGroupConfiguration {
         private boolean enableAdd;
         private boolean enableDelete;
         private boolean enableBulkOps;
+        private boolean enableGroupTransfer = true;
+        private boolean displayPagination = true;
+        private boolean enableUsersManagement = true;
+        private boolean enableCustomersManagement = true;
+        private boolean enableAssetsManagement = true;
+        private boolean enableDevicesManagement = true;
+        private boolean enableViewsManagement = true;
+        private boolean enableEdgesManagement = true;
+        private boolean enableDashboardsManagement = true;
+        private String tableTitle = "";
+        private String openDetailsOn = "ON_ROW_CLICK";
+        private int pageStepIncrement = 10;
+        private int numberOfSteps = 3;
+        private int defaultPageSize = 10;
     }
 
     @Data

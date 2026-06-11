@@ -80,11 +80,37 @@ export interface EntityGroupColumnConfiguration {
   mobileHide: boolean;
 }
 
+export type EntityGroupOpenDetailsOn = 'ON_ROW_CLICK' | 'ON_ACTION_BUTTON' | 'DISABLED';
+
+export const entityGroupOpenDetailsOnValues: EntityGroupOpenDetailsOn[] = [
+  'ON_ROW_CLICK', 'ON_ACTION_BUTTON', 'DISABLED'
+];
+
+export const entityGroupOpenDetailsOnTranslations = new Map<EntityGroupOpenDetailsOn, string>([
+  ['ON_ROW_CLICK',    'entityGroup.setting.open-details-on-row-click'],
+  ['ON_ACTION_BUTTON','entityGroup.setting.open-details-on-action-button'],
+  ['DISABLED',        'entityGroup.setting.open-details-disabled']
+]);
+
 export interface EntityGroupSettings {
   enableSearch: boolean;
   enableAdd: boolean;
   enableDelete: boolean;
   enableBulkOps: boolean;
+  enableGroupTransfer: boolean;
+  tableTitle: string;
+  openDetailsOn: EntityGroupOpenDetailsOn;
+  displayPagination: boolean;
+  pageStepIncrement: number;
+  numberOfSteps: number;
+  defaultPageSize: number;
+  enableUsersManagement: boolean;
+  enableCustomersManagement: boolean;
+  enableAssetsManagement: boolean;
+  enableDevicesManagement: boolean;
+  enableViewsManagement: boolean;
+  enableEdgesManagement: boolean;
+  enableDashboardsManagement: boolean;
 }
 
 export interface EntityGroupActionConfiguration {
@@ -117,7 +143,21 @@ export function defaultEntityGroupSettings(): EntityGroupSettings {
     enableSearch: true,
     enableAdd: true,
     enableDelete: true,
-    enableBulkOps: true
+    enableBulkOps: true,
+    enableGroupTransfer: true,
+    tableTitle: '',
+    openDetailsOn: 'ON_ROW_CLICK',
+    displayPagination: true,
+    pageStepIncrement: 10,
+    numberOfSteps: 3,
+    defaultPageSize: 10,
+    enableUsersManagement: true,
+    enableCustomersManagement: true,
+    enableAssetsManagement: true,
+    enableDevicesManagement: true,
+    enableViewsManagement: true,
+    enableEdgesManagement: true,
+    enableDashboardsManagement: true
   };
 }
 

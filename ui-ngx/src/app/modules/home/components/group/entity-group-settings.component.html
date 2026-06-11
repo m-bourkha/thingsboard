@@ -15,7 +15,13 @@
     limitations under the License.
 
 -->
-<section class="flex flex-col" [formGroup]="settingsForm">
+<section class="flex flex-col gap-2" [formGroup]="settingsForm">
+
+  <mat-form-field class="w-full">
+    <mat-label>{{ 'entityGroup.setting.table-title' | translate }}</mat-label>
+    <input matInput formControlName="tableTitle">
+  </mat-form-field>
+
   <mat-checkbox formControlName="enableSearch">
     {{ 'entityGroup.setting.enable-search' | translate }}
   </mat-checkbox>
@@ -28,4 +34,78 @@
   <mat-checkbox formControlName="enableBulkOps">
     {{ 'entityGroup.setting.enable-bulk-ops' | translate }}
   </mat-checkbox>
+  <mat-checkbox formControlName="enableGroupTransfer">
+    {{ 'entityGroup.setting.enable-group-transfer' | translate }}
+  </mat-checkbox>
+
+  <mat-form-field class="w-full">
+    <mat-label>{{ 'entityGroup.setting.open-details-on' | translate }}</mat-label>
+    <mat-select formControlName="openDetailsOn">
+      @for (option of openDetailsOnValues; track option) {
+        <mat-option [value]="option">
+          {{ openDetailsOnTranslations.get(option) | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-checkbox formControlName="displayPagination">
+    {{ 'entityGroup.setting.display-pagination' | translate }}
+  </mat-checkbox>
+
+  <mat-form-field class="w-full">
+    <mat-label>{{ 'entityGroup.setting.page-step-increment' | translate }}</mat-label>
+    <input matInput type="number" formControlName="pageStepIncrement" min="1">
+    @if (settingsForm.get('pageStepIncrement').hasError('required')) {
+      <mat-error>{{ 'entityGroup.setting.page-step-increment-required' | translate }}</mat-error>
+    }
+    @if (settingsForm.get('pageStepIncrement').hasError('min')) {
+      <mat-error>{{ 'entityGroup.setting.value-min-error' | translate }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field class="w-full">
+    <mat-label>{{ 'entityGroup.setting.number-of-steps' | translate }}</mat-label>
+    <input matInput type="number" formControlName="numberOfSteps" min="1">
+    @if (settingsForm.get('numberOfSteps').hasError('required')) {
+      <mat-error>{{ 'entityGroup.setting.number-of-steps-required' | translate }}</mat-error>
+    }
+    @if (settingsForm.get('numberOfSteps').hasError('min')) {
+      <mat-error>{{ 'entityGroup.setting.value-min-error' | translate }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field class="w-full">
+    <mat-label>{{ 'entityGroup.setting.default-page-size' | translate }}</mat-label>
+    <input matInput type="number" formControlName="defaultPageSize" min="1">
+    @if (settingsForm.get('defaultPageSize').hasError('required')) {
+      <mat-error>{{ 'entityGroup.setting.default-page-size-required' | translate }}</mat-error>
+    }
+    @if (settingsForm.get('defaultPageSize').hasError('min')) {
+      <mat-error>{{ 'entityGroup.setting.value-min-error' | translate }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-checkbox formControlName="enableUsersManagement">
+    {{ 'entityGroup.setting.enable-users-management' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="enableCustomersManagement">
+    {{ 'entityGroup.setting.enable-customers-management' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="enableAssetsManagement">
+    {{ 'entityGroup.setting.enable-assets-management' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="enableDevicesManagement">
+    {{ 'entityGroup.setting.enable-devices-management' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="enableViewsManagement">
+    {{ 'entityGroup.setting.enable-views-management' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="enableEdgesManagement">
+    {{ 'entityGroup.setting.enable-edges-management' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="enableDashboardsManagement">
+    {{ 'entityGroup.setting.enable-dashboards-management' | translate }}
+  </mat-checkbox>
+
 </section>

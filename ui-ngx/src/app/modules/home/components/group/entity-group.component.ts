@@ -17,21 +17,16 @@
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import {
   defaultEntityGroupColumns,
   defaultEntityGroupSettings,
-
   EntityGroup,
   EntityGroupColumnConfiguration,
   EntityGroupSettings
 } from '@shared/models/entity-group.model';
-import {MatError, MatFormField, MatLabel} from "@angular/material/input";
-import {TranslatePipe} from "@ngx-translate/core";
-import {AsyncPipe} from "@angular/common";
-import {MatCheckbox} from "@angular/material/checkbox";
 
 @Component({
   selector: 'tb-entity-group',
@@ -59,6 +54,7 @@ export class EntityGroupComponent extends EntityComponent<EntityGroup> {
   }
 
   buildForm(entity: EntityGroup): UntypedFormGroup {
+    const s = this.settingsValue(entity);
     return this.fb.group({
       name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
       publicGroup: [entity ? entity.publicGroup : false],
@@ -67,7 +63,26 @@ export class EntityGroupComponent extends EntityComponent<EntityGroup> {
       }),
       configuration: this.fb.group({
         columns: [this.columnsValue(entity)],
-        settings: this.fb.group(this.settingsValue(entity)),
+        settings: this.fb.group({
+          enableSearch:              [s.enableSearch],
+          enableAdd:                 [s.enableAdd],
+          enableDelete:              [s.enableDelete],
+          enableBulkOps:             [s.enableBulkOps],
+          enableGroupTransfer:       [s.enableGroupTransfer],
+          tableTitle:                [s.tableTitle],
+          openDetailsOn:             [s.openDetailsOn],
+          displayPagination:         [s.displayPagination],
+          pageStepIncrement:         [s.pageStepIncrement, [Validators.required, Validators.min(1)]],
+          numberOfSteps:             [s.numberOfSteps,     [Validators.required, Validators.min(1)]],
+          defaultPageSize:           [s.defaultPageSize,   [Validators.required, Validators.min(1)]],
+          enableUsersManagement:     [s.enableUsersManagement],
+          enableCustomersManagement: [s.enableCustomersManagement],
+          enableAssetsManagement:    [s.enableAssetsManagement],
+          enableDevicesManagement:   [s.enableDevicesManagement],
+          enableViewsManagement:     [s.enableViewsManagement],
+          enableEdgesManagement:     [s.enableEdgesManagement],
+          enableDashboardsManagement:[s.enableDashboardsManagement]
+        }),
         actions: [entity?.configuration?.actions ?? []]
       })
     });
