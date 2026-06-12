@@ -48,6 +48,7 @@ import { catchError } from 'rxjs/operators';
 import { JsLibraryTableConfigResolver } from '@home/pages/admin/resource/js-library-table-config.resolver';
 import { TrendzSettingsComponent } from '@home/pages/admin/trendz-settings.component';
 import { aiModelRoutes } from '@home/pages/ai-model/ai-model-routing.module';
+import { roleRoutes } from '@home/pages/role/role-routing.module';
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -436,7 +437,8 @@ const routes: Routes = [
         }
       },
       ...oAuth2Routes,
-      ...auditLogsRoutes
+      ...auditLogsRoutes,
+      ...roleRoutes
     ]
   }
 ];

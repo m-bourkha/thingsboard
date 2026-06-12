@@ -224,6 +224,7 @@ export const HelpLinks = {
     calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/calculated-fields/`,
     aiModels: `${helpBaseUrl}/docs${docPlatformPrefix}/samples/analytics/ai-models/`,
     apiKeys: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/security/api-keys/`,
+    roles: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/security/roles/`,
     timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
     trendzSettings: `${helpBaseUrl}/docs/trendz/`,
     alarmRules: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/alarm-rules/`,

@@ -85,6 +85,7 @@ export enum MenuId {
   domains = 'domains',
   clients = 'clients',
   audit_log = 'audit_log',
+  roles = 'roles',
   alarms_center = 'alarms_center',
   alarms = 'alarms',
   alarm_rules = 'alarm_rules',
@@ -300,6 +301,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/settings/ai-models',
       icon: 'auto_awesome'
+    }
+  ],
+  [
+    MenuId.roles,
+    {
+      id: MenuId.roles,
+      name: 'role.roles',
+      type: 'link',
+      path: '/security-settings/roles',
+      icon: 'mdi:shield-account'
     }
   ],
   [
@@ -944,6 +955,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         id: MenuId.security_settings,
         pages: [
           {id: MenuId.audit_log},
+          {id: MenuId.roles},
           {
             id: MenuId.oauth2,
             pages: [
