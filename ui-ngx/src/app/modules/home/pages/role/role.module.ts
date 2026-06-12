@@ -17,18 +17,22 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
+import { HomeComponentsModule } from '@home/components/home-components.module';
 import { RoleRoutingModule } from '@home/pages/role/role-routing.module';
 import { RoleTableHeaderComponent } from '@home/pages/role/role-table-header.component';
-import { RoleDialogComponent } from '@home/components/role/role-dialog.component';
+import { RoleComponent } from '@home/components/role/role.component';
+import { RoleTabsComponent } from '@home/components/role/role-tabs.component';
 
 @NgModule({
   declarations: [
     RoleTableHeaderComponent,
-    RoleDialogComponent
+    RoleComponent,
+    RoleTabsComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     RoleRoutingModule
   ]
 })

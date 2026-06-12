@@ -1,0 +1,140 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [class.!hidden]="hideDelete() || isEdit">
+    {{'role.delete' | translate }}
+  </button>
+  <div class="flex flex-row xs:flex-col">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onRoleIdCopied()"
+            [cbContent]="entity?.id?.id"
+            [class.!hidden]="isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>role.copyId</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding flex flex-col">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.name</mat-label>
+        <input matInput required formControlName="name">
+        @if (entityForm.get('name').hasError('required') || entityForm.get('name').hasError('pattern')) {
+          <mat-error>{{ 'role.name-required' | translate }}</mat-error>
+        }
+        @if (entityForm.get('name').hasError('maxlength')) {
+          <mat-error>{{ 'role.name-max-length' | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.role-type</mat-label>
+        <mat-select required formControlName="type">
+          @for (type of roleTypes; track type) {
+            <mat-option [value]="type">{{ roleTypeTranslations.get(type) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.description</mat-label>
+        <textarea matInput formControlName="description" rows="3"></textarea>
+      </mat-form-field>
+
+      <mat-expansion-panel class="tb-role-permissions" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title translate>role.permissions</mat-panel-title>
+        </mat-expansion-panel-header>
+
+        @if (isGroup) {
+          <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>role.operations</mat-label>
+            <mat-select required multiple formControlName="operations">
+              @for (operation of operations; track operation) {
+                <mat-option [value]="operation">{{ operationTranslations.get(operation) | translate }}</mat-option>
+              }
+            </mat-select>
+            @if (entityForm.get('operations').hasError('required')) {
+              <mat-error>{{ 'role.operations-required' | translate }}</mat-error>
+            }
+          </mat-form-field>
+        } @else {
+          <div class="tb-role-generic" formArrayName="generic">
+            @if (genericArray.length) {
+              <div class="tb-role-generic-header">
+                <div class="tb-role-generic-col resource" translate>role.resource</div>
+                <div class="tb-role-generic-col" translate>role.allowed</div>
+                <div class="tb-role-generic-col" translate>role.denied</div>
+                @if (isEdit) {
+                  <div class="tb-role-generic-action"></div>
+                }
+              </div>
+            }
+            @for (control of genericArray.controls; track control; let i = $index) {
+              <div class="tb-role-generic-row" [formGroupName]="i">
+                <mat-form-field class="tb-role-generic-col resource" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select required formControlName="resource" placeholder="{{ 'role.resource' | translate }}">
+                    @for (resource of resources; track resource) {
+                      <mat-option [value]="resource">{{ resourceTranslations.get(resource) | translate }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="tb-role-generic-col" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select multiple formControlName="allowed" placeholder="{{ 'role.allowed' | translate }}">
+                    @for (operation of operations; track operation) {
+                      <mat-option [value]="operation">{{ operationTranslations.get(operation) | translate }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="tb-role-generic-col" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select multiple formControlName="denied" placeholder="{{ 'role.denied' | translate }}">
+                    @for (operation of operations; track operation) {
+                      <mat-option [value]="operation">{{ operationTranslations.get(operation) | translate }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                @if (isEdit) {
+                  <button mat-icon-button class="tb-role-generic-action"
+                          type="button"
+                          (click)="removeGenericRow(i)"
+                          matTooltip="{{ 'action.remove' | translate }}"
+                          matTooltipPosition="above">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+            @if (isEdit) {
+              <div class="tb-role-generic-add">
+                <button mat-stroked-button color="primary" type="button" (click)="addGenericRow()">
+                  <mat-icon>add</mat-icon>
+                  <span translate>role.add-permission</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </mat-expansion-panel>
+    </fieldset>
+  </form>
+</div>

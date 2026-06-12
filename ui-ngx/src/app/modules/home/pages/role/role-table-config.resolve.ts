@@ -16,7 +16,6 @@
 
 import { Injectable } from '@angular/core';
 import {
-  CellActionDescriptor,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -26,12 +25,11 @@ import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared
 import { Direction } from '@shared/models/page/sort-order';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
 import { Role, roleTypeTranslations } from '@shared/models/role.model';
 import { RoleService } from '@core/http/role.service';
 import { RoleTableHeaderComponent } from '@home/pages/role/role-table-header.component';
-import { RoleDialogComponent, RoleDialogData } from '@home/components/role/role-dialog.component';
+import { RoleComponent } from '@home/components/role/role.component';
+import { RoleTabsComponent } from '@home/components/role/role-tabs.component';
 
 @Injectable()
 export class RolesTableConfigResolver {
@@ -41,21 +39,19 @@ export class RolesTableConfigResolver {
   constructor(
     private datePipe: DatePipe,
     private roleService: RoleService,
-    private translate: TranslateService,
-    private dialog: MatDialog
+    private translate: TranslateService
   ) {
     this.config.selectionEnabled = true;
     this.config.entityType = EntityType.ROLE;
     this.config.rowPointer = true;
-    this.config.detailsPanelEnabled = false;
+    this.config.entityComponent = RoleComponent;
+    this.config.entityTabsComponent = RoleTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.ROLE);
     this.config.entityResources = entityTypeResources.get(EntityType.ROLE);
 
     this.config.headerComponent = RoleTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
-
-    this.config.addEntity = () => this.roleDialog(null, true);
 
     this.config.columns.push(
       new DateEntityTableColumn<Role>('createdTime', 'common.created-time', this.datePipe, '170px'),
@@ -72,46 +68,13 @@ export class RolesTableConfigResolver {
     this.config.deleteEntitiesTitle = count => this.translate.instant('role.delete-roles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('role.delete-roles-text');
 
-    this.config.deleteEntity = id => this.roleService.deleteRole(id.id);
-
     this.config.entitiesFetchFunction = pageLink => this.roleService.getRoles(undefined, pageLink);
-
-    this.config.cellActionDescriptors = this.configureCellActions();
-
-    this.config.handleRowClick = ($event, role) => {
-      this.editRole($event, role);
-      return true;
-    };
+    this.config.loadEntity = id => this.roleService.getRole(id.id);
+    this.config.saveEntity = role => this.roleService.saveRole(role);
+    this.config.deleteEntity = id => this.roleService.deleteRole(id.id);
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<Role> {
     return this.config;
-  }
-
-  private configureCellActions(): Array<CellActionDescriptor<Role>> {
-    return [
-      {
-        name: this.translate.instant('action.edit'),
-        icon: 'edit',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.editRole($event, entity)
-      }
-    ];
-  }
-
-  private editRole($event, role: Role): void {
-    $event?.stopPropagation();
-    this.roleDialog(role, false).subscribe(res => res ? this.config.updateData() : null);
-  }
-
-  private roleDialog(role: Role, isAdd = false): Observable<Role> {
-    return this.dialog.open<RoleDialogComponent, RoleDialogData, Role>(RoleDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        isAdd,
-        role
-      }
-    }).afterClosed();
   }
 }

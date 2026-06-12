@@ -543,7 +543,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         type: 'entity.type-role',
         typePlural: 'entity.type-roles',
         list: 'role.roles',
-        details: 'role.roles',
+        details: 'role.role-details',
         add: 'role.add',
         noEntities: 'role.no-roles-text',
         search: 'role.search',
