@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -29,6 +28,7 @@ import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RolePermissions;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -78,7 +78,9 @@ public class RoleControllerTest extends AbstractControllerTest {
         Role role = new Role();
         role.setName(name);
         role.setType(type);
-        role.setPermissions(JacksonUtil.toJsonNode("{\"ALL\":[\"ALL\"]}"));
+        RolePermissions permissions = new RolePermissions();
+        permissions.setOperations(List.of("ALL"));
+        role.setPermissions(permissions);
         return role;
     }
 

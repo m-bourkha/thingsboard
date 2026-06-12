@@ -26,12 +26,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RolePermissions;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.exception.DataValidationException;
@@ -69,7 +69,9 @@ public class RoleServiceTest extends AbstractServiceTest {
         role.setTenantId(tenantId);
         role.setName(name);
         role.setType(type);
-        role.setPermissions(JacksonUtil.toJsonNode("{\"ALL\":[\"ALL\"]}"));
+        RolePermissions permissions = new RolePermissions();
+        permissions.setOperations(List.of("ALL"));
+        role.setPermissions(permissions);
         return role;
     }
 

@@ -25,6 +25,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RolePermissions;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
@@ -66,7 +67,7 @@ public final class RoleEntity extends BaseVersionedEntity<Role> {
         this.name = role.getName();
         this.type = role.getType() != null ? role.getType().name() : null;
         this.description = role.getDescription();
-        this.permissions = role.getPermissions();
+        this.permissions = toJson(role.getPermissions());
         if (role.getExternalId() != null) {
             this.externalId = role.getExternalId().getId();
         }
@@ -83,7 +84,7 @@ public final class RoleEntity extends BaseVersionedEntity<Role> {
             role.setType(RoleType.valueOf(type));
         }
         role.setDescription(description);
-        role.setPermissions(permissions);
+        role.setPermissions(permissions != null ? fromJson(permissions, RolePermissions.class) : null);
         if (externalId != null) {
             role.setExternalId(new RoleId(externalId));
         }

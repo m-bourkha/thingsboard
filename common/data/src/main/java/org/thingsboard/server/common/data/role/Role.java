@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.common.data.role;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
@@ -32,12 +29,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Objects;
 
-@Slf4j
 @EqualsAndHashCode(callSuper = true)
 public class Role extends BaseData<RoleId>
         implements HasTenantId, HasName, HasVersion, ExportableEntity<RoleId> {
@@ -60,9 +53,8 @@ public class Role extends BaseData<RoleId>
     @Schema(description = "Description of the role")
     private String description;
 
-    private transient JsonNode permissions;
-    @JsonIgnore
-    private byte[] permissionsBytes;
+    @Schema(description = "Permissions granted by the role")
+    private RolePermissions permissions;
 
     @Getter @Setter
     private Long version;
@@ -124,31 +116,12 @@ public class Role extends BaseData<RoleId>
         this.description = description;
     }
 
-    public JsonNode getPermissions() {
-        if (permissions != null) {
-            return permissions;
-        }
-        if (permissionsBytes != null) {
-            try {
-                return mapper.readTree(new ByteArrayInputStream(permissionsBytes));
-            } catch (IOException e) {
-                log.warn("Can't deserialize permissions", e);
-            }
-        }
-        return null;
+    public RolePermissions getPermissions() {
+        return permissions;
     }
 
-    public void setPermissions(JsonNode permissions) {
+    public void setPermissions(RolePermissions permissions) {
         this.permissions = permissions;
-        if (permissions != null) {
-            try {
-                this.permissionsBytes = mapper.writeValueAsBytes(permissions);
-            } catch (Exception e) {
-                log.warn("Can't serialize permissions", e);
-            }
-        } else {
-            this.permissionsBytes = null;
-        }
     }
 
     @Override
@@ -161,11 +134,11 @@ public class Role extends BaseData<RoleId>
                 && Objects.equals(name, role.name)
                 && type == role.type
                 && Objects.equals(description, role.description)
-                && Arrays.equals(permissionsBytes, role.permissionsBytes);
+                && Objects.equals(permissions, role.permissions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), tenantId, name, type, description, Arrays.hashCode(permissionsBytes));
+        return Objects.hash(super.hashCode(), tenantId, name, type, description, permissions);
     }
 }
