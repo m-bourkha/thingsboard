@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.role;
 import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -60,6 +62,10 @@ public class RoleServiceImpl extends AbstractCachedEntityService<RoleCacheKey, R
 
     @Autowired
     private DataValidator<Role> roleValidator;
+
+    @Autowired
+    @Lazy
+    private GroupPermissionService groupPermissionService;
 
     @TransactionalEventListener(classes = RoleCacheEvictEvent.class)
     @Override
@@ -138,6 +144,7 @@ public class RoleServiceImpl extends AbstractCachedEntityService<RoleCacheKey, R
                 throw new IncorrectParameterException("Unable to delete non-existent role.");
             }
         }
+        groupPermissionService.deleteGroupPermissionsByTenantIdAndRoleId(tenantId, roleId);
         roleDao.removeById(tenantId, roleId.getId());
         publishEvictEvent(new RoleCacheEvictEvent(role.getTenantId(), role.getName(), null));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(roleId).entity(role).build());

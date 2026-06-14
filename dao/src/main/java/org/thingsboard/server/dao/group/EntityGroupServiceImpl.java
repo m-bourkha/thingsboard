@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.group;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -68,6 +70,10 @@ public class EntityGroupServiceImpl extends AbstractCachedEntityService<EntityGr
 
     @Autowired
     private EntityCountService countService;
+
+    @Autowired
+    @Lazy
+    private GroupPermissionService groupPermissionService;
 
     @TransactionalEventListener(classes = EntityGroupCacheEvictEvent.class)
     @Override
@@ -142,6 +148,10 @@ public class EntityGroupServiceImpl extends AbstractCachedEntityService<EntityGr
         }
         if (group.isGroupAll()) {
             throw new DataValidationException("The 'All' group cannot be deleted!");
+        }
+        groupPermissionService.deleteGroupPermissionsByTenantIdAndEntityGroupId(tenantId, entityGroupId);
+        if (group.getType() == EntityType.USER) {
+            groupPermissionService.deleteGroupPermissionsByTenantIdAndUserGroupId(tenantId, entityGroupId);
         }
         entityGroupDao.removeById(tenantId, entityGroupId.getId());
         publishEvictEvent(new EntityGroupCacheEvictEvent(tenantId, group.getOwnerId(), group.getType(), group.getName(), null));

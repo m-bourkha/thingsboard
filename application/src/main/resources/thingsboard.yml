@@ -792,6 +792,15 @@ cache:
     apiKeys:
       timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
       maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    entityGroups:
+      timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_GROUPS_TTL:1440}" # Entity group cache TTL
+      maxSize: "${CACHE_SPECS_ENTITY_GROUPS_MAX_SIZE:0}" # 0 means the cache is disabled
+    roles:
+      timeToLiveInMinutes: "${CACHE_SPECS_ROLES_TTL:1440}" # Role cache TTL
+      maxSize: "${CACHE_SPECS_ROLES_MAX_SIZE:0}" # 0 means the cache is disabled
+    groupPermissions:
+      timeToLiveInMinutes: "${CACHE_SPECS_GROUP_PERMISSIONS_TTL:1440}" # Group permission cache TTL
+      maxSize: "${CACHE_SPECS_GROUP_PERMISSIONS_MAX_SIZE:0}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -973,7 +982,7 @@ spring:
     # Database user name
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     # Database user password
-    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:pd2Sx2hDEh96BTr(@EeOClNw2}"
     hikari:
       # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak. A value of 0 means leak detection is disabled
       leakDetectionThreshold: "${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
@@ -993,7 +1002,7 @@ spring:
       # Database username for events datasource
       username: "${SPRING_EVENTS_DATASOURCE_USERNAME:postgres}"
       # Database user password for events datasource
-      password: "${SPRING_EVENTS_DATASOURCE_PASSWORD:postgres}"
+      password: "${SPRING_DATASOURCE_PASSWORD:postgres"
       hikari:
         # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak for events datasource. A value of 0 means leak detection is disabled
         leakDetectionThreshold: "${SPRING_EVENTS_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"

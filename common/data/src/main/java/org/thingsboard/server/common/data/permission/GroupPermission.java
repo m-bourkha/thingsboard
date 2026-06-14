@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.EntityGroupId;
@@ -32,7 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class GroupPermission extends BaseData<GroupPermissionId>
-        implements HasTenantId, HasVersion {
+        implements HasTenantId, HasName, HasVersion {
 
     private static final long serialVersionUID = -1022736540062754116L;
 
@@ -120,5 +121,11 @@ public class GroupPermission extends BaseData<GroupPermissionId>
 
     public void setPublicPermission(boolean publicPermission) {
         this.publicPermission = publicPermission;
+    }
+
+    @Override
+    public String getName() {
+        return (roleId != null ? roleId.getId() : "null")
+                + ":" + (userGroupId != null ? userGroupId.getId() : "null");
     }
 }
