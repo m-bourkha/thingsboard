@@ -1,0 +1,141 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="mat-padding tb-entity-table tb-absolute-fill">
+  <div class="tb-entity-table-content tb-outlined-border flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <span class="tb-entity-table-title" translate>groupPermission.entity-group-permissions</span>
+        <span class="flex-1"></span>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+                (click)="addPermission($event)"
+                matTooltip="{{ 'action.add' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="reload()"
+                matTooltip="{{ 'action.refresh' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button matTooltip="{{ 'action.search' | translate }}" matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field class="flex-1">
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [formControl]="textSearch"
+                 placeholder="{{ 'common.enter-search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [class.!hidden]="dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools flex items-center justify-between">
+        <span class="tb-entity-table-info">
+          {{ 'groupPermission.selected-permissions' | translate:{count: dataSource.selection.selected.length} }}
+        </span>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.delete' | translate }}"
+                matTooltipPosition="above"
+                (click)="deletePermissions($event)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div class="table-container flex-1">
+      <table mat-table [dataSource]="dataSource"
+             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="select" sticky>
+          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+            <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
+                          [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                          [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
+            </mat-checkbox>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let permission">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="$event ? dataSource.selection.toggle(permission) : null"
+                          [checked]="dataSource.selection.isSelected(permission)">
+            </mat-checkbox>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="roleName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%">
+            {{ 'groupPermission.role-name' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let permission">{{ permission.roleName }}</mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="userGroupName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%">
+            {{ 'groupPermission.user-group-name' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let permission">{{ permission.userGroupName }}</mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="userGroupOwnerName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 34%">
+            {{ 'groupPermission.user-group-owner' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let permission">{{ permission.userGroupOwnerName }}</mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef style="min-width: 40px; max-width: 40px; width: 40px"></mat-header-cell>
+          <mat-cell *matCellDef="let permission">
+            <div class="flex flex-1 flex-row items-stretch justify-end">
+              <button mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'action.delete' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="deletePermission($event, permission)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row class="mat-row-select"
+                 [class.mat-selected]="dataSource.selection.isSelected(permission)"
+                 *matRowDef="let permission; columns: displayedColumns;"
+                 (click)="dataSource.selection.toggle(permission)">
+        </mat-row>
+      </table>
+      <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
+            class="no-data-found flex items-center justify-center" translate>
+        groupPermission.no-permissions-text
+      </span>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-paginator [length]="dataSource.total() | async"
+                   [pageIndex]="pageLink.page"
+                   [pageSize]="pageLink.pageSize"
+                   [pageSizeOptions]="[10, 20, 30]"
+                   [hidePageSize]="hidePageSize">
+    </mat-paginator>
+  </div>
+</div>

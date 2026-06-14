@@ -1,0 +1,64 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="form" (ngSubmit)="add()">
+  <mat-toolbar color="primary">
+    <h2 translate>groupPermission.add</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar mode="indeterminate" [class.!hidden]="!(isLoading$ | async)"></mat-progress-bar>
+  <div style="height: 4px;" [class.!hidden]="isLoading$ | async"></div>
+  <div mat-dialog-content>
+    @if (noGroupRoles) {
+      <div class="tb-hint" translate>groupPermission.no-group-roles-text</div>
+    }
+    <mat-form-field class="mat-block">
+      <mat-label translate>groupPermission.role</mat-label>
+      <mat-select formControlName="roleId" required>
+        @for (role of groupRoles; track role.id.id) {
+          <mat-option [value]="role.id.id">{{ role.name }}</mat-option>
+        }
+      </mat-select>
+      <mat-error *ngIf="form.get('roleId').hasError('required')" translate>
+        groupPermission.role-required
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="mat-block">
+      <mat-label translate>groupPermission.user-group</mat-label>
+      <mat-select formControlName="userGroupId" required>
+        @for (group of userGroups; track group.id.id) {
+          <mat-option [value]="group.id.id">{{ group.name }}</mat-option>
+        }
+      </mat-select>
+      <mat-error *ngIf="form.get('userGroupId').hasError('required')" translate>
+        groupPermission.user-group-required
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
+    <button mat-button (click)="cancel()" type="button" [disabled]="isLoading$ | async">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary" type="submit"
+            [disabled]="(isLoading$ | async) || form.invalid || noGroupRoles">
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</form>
