@@ -20,7 +20,7 @@ import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { GroupPermission } from '@shared/models/group-permission.model';
+import { GroupPermission, GroupPermissionInfo } from '@shared/models/group-permission.model';
 
 @Injectable({
   providedIn: 'root'
@@ -41,22 +41,22 @@ export class GroupPermissionService {
     return this.http.delete<void>(`/api/groupPermission/${groupPermissionId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getByUserGroup(userGroupId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<GroupPermission>> {
-    return this.http.get<PageData<GroupPermission>>(
+  public getByUserGroup(userGroupId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<GroupPermissionInfo>> {
+    return this.http.get<PageData<GroupPermissionInfo>>(
       `/api/userGroup/${userGroupId}/groupPermissions${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
     );
   }
 
-  public getByEntityGroup(entityGroupId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<GroupPermission>> {
-    return this.http.get<PageData<GroupPermission>>(
+  public getByEntityGroup(entityGroupId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<GroupPermissionInfo>> {
+    return this.http.get<PageData<GroupPermissionInfo>>(
       `/api/entityGroup/${entityGroupId}/groupPermissions${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
     );
   }
 
-  public getByRole(roleId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<GroupPermission>> {
-    return this.http.get<PageData<GroupPermission>>(
+  public getByRole(roleId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<GroupPermissionInfo>> {
+    return this.http.get<PageData<GroupPermissionInfo>>(
       `/api/role/${roleId}/groupPermissions${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
     );

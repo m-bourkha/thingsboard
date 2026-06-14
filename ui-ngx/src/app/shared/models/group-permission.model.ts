@@ -21,6 +21,8 @@ import { RoleId } from '@shared/models/id/role-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { HasTenantId, HasVersion } from '@shared/models/entity.models';
+import { RoleType } from '@shared/models/role.model';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export interface GroupPermission extends BaseData<GroupPermissionId>, HasTenantId, HasVersion, ExportableEntity<GroupPermissionId> {
   tenantId?: TenantId;
@@ -32,4 +34,12 @@ export interface GroupPermission extends BaseData<GroupPermissionId>, HasTenantI
   /** Denormalized; null when entityGroupId is null. */
   entityGroupType?: EntityType;
   publicPermission: boolean;
+}
+
+export interface GroupPermissionInfo extends GroupPermission {
+  roleName?: string;
+  roleType?: RoleType;
+  userGroupName?: string;
+  userGroupOwnerId?: EntityId;
+  userGroupOwnerName?: string;
 }

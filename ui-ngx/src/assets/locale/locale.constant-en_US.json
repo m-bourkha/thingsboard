@@ -3804,17 +3804,26 @@
         "scroll-to-top": "Scroll to top"
     },
     "groupPermission": {
-        "permissions": "Group permissions",
+        "permissions": "Permissions",
+        "entity-group-permissions": "Entity group permissions",
         "user-group": "User group",
         "entity-group": "Entity group",
         "role": "Role",
+        "role-name": "Role name",
+        "user-group-name": "User group name",
+        "user-group-owner": "User group owner",
         "public": "Public",
         "add": "Add group permission",
         "delete-title": "Are you sure you want to delete this group permission?",
         "delete-text": "Be careful, after the confirmation the group permission will become unrecoverable.",
+        "delete-permissions-title": "Are you sure you want to delete { count, plural, =1 {1 permission} other {# permissions} }?",
+        "delete-permissions-text": "Be careful, after the confirmation the selected group permissions will become unrecoverable.",
         "no-permissions-text": "No group permissions found",
+        "no-group-roles-text": "No GROUP-type roles available. Please create a GROUP role first.",
         "search": "Search group permissions",
-        "selected-permissions": "{ count, plural, =1 {1 permission} other {# permissions} } selected"
+        "selected-permissions": "{ count, plural, =1 {1 permission} other {# permissions} } selected",
+        "role-required": "Role is required",
+        "user-group-required": "User group is required"
     },
     "help": {
         "goto-help-page": "Go to help page",

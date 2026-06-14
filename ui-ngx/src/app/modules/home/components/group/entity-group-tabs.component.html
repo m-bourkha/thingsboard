@@ -34,6 +34,9 @@
     </div>
   </mat-tab>
   @if (!isEdit) {
+    <mat-tab label="{{ 'groupPermission.permissions' | translate }}" #permissionsTab="matTab">
+      <tb-entity-group-permissions [active]="permissionsTab.isActive" [entityGroup]="entity"></tb-entity-group-permissions>
+    </mat-tab>
     <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
       <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
                           [active]="attributesTab.isActive"

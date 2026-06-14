@@ -216,6 +216,8 @@ import { EntityGroupSettingsComponent } from '@home/components/group/entity-grou
 import { EntityGroupActionsComponent } from '@home/components/group/entity-group-actions.component';
 import { EntityGroupActionDialogComponent } from '@home/components/group/entity-group-action-dialog.component';
 import { EntityGroupColumnDialogComponent } from '@home/components/group/entity-group-column-dialog.component';
+import { EntityGroupPermissionsComponent } from '@home/components/group/entity-group-permissions.component';
+import { AddGroupPermissionDialogComponent } from '@home/components/group/add-group-permission-dialog.component';
 
 @NgModule({
   declarations:
@@ -381,7 +383,9 @@ import { EntityGroupColumnDialogComponent } from '@home/components/group/entity-
       EntityGroupSettingsComponent,
       EntityGroupActionsComponent,
       EntityGroupActionDialogComponent,
-      EntityGroupColumnDialogComponent
+      EntityGroupColumnDialogComponent,
+      EntityGroupPermissionsComponent,
+      AddGroupPermissionDialogComponent
     ],
   imports: [
     CommonModule,
