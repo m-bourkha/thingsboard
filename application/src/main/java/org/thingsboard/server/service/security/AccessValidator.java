@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -69,6 +71,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
@@ -130,6 +133,9 @@ public class AccessValidator {
 
     @Autowired
     protected EntityViewService entityViewService;
+
+    @Autowired
+    protected EntityGroupService entityGroupService;
 
     @Autowired(required = false)
     protected EdgeService edgeService;
@@ -217,6 +223,7 @@ public class AccessValidator {
             case TENANT -> validateTenant(currentUser, operation, entityId, callback);
             case TENANT_PROFILE -> validateTenantProfile(currentUser, operation, entityId, callback);
             case USER -> validateUser(currentUser, operation, entityId, callback);
+            case ENTITY_GROUP -> validateEntityGroup(currentUser, operation, entityId, callback);
             case ENTITY_VIEW -> validateEntityView(currentUser, operation, entityId, callback);
             case EDGE -> validateEdge(currentUser, operation, entityId, callback);
             case API_USAGE_STATE -> validateApiUsageState(currentUser, operation, entityId, callback);
@@ -484,6 +491,26 @@ public class AccessValidator {
             return ValidationResult.ok(user);
 
         }), executor);
+    }
+
+    private void validateEntityGroup(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            EntityGroup entityGroup = entityGroupService.findEntityGroupById(currentUser.getTenantId(), new EntityGroupId(entityId.getId()));
+            Futures.addCallback(Futures.immediateFuture(entityGroup), getCallback(callback, group -> {
+                if (group == null) {
+                    return ValidationResult.entityNotFound("Entity group with requested id wasn't found!");
+                } else {
+                    try {
+                        accessControlService.checkPermission(currentUser, Resource.ENTITY_GROUP, operation, entityId, group);
+                    } catch (ThingsboardException e) {
+                        return ValidationResult.accessDenied(e.getMessage());
+                    }
+                    return ValidationResult.ok(group);
+                }
+            }), executor);
+        }
     }
 
     private void validateEntityView(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
