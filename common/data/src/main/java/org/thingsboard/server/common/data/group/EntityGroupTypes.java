@@ -26,6 +26,7 @@ public final class EntityGroupTypes {
     public static final Set<EntityType> GROUPABLE = Set.of(
             EntityType.DEVICE,
             EntityType.ASSET,
-            EntityType.CUSTOMER
+            EntityType.CUSTOMER,
+            EntityType.USER
     );
 }

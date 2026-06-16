@@ -85,4 +85,22 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     List<UserEntity> findUsersByTenantIdAndIdIn(UUID tenantId, List<UUID> userIds);
 
+    @Query(value = "SELECT u.* FROM tb_user u " +
+                   "INNER JOIN entity_group_relation egr ON egr.entity_id = u.id " +
+                   "WHERE egr.group_id = :groupId AND egr.entity_type = 'USER' " +
+                   "AND (:textSearch IS NULL OR u.email ILIKE CONCAT('%', :textSearch, '%') " +
+                   "OR u.first_name ILIKE CONCAT('%', :textSearch, '%') " +
+                   "OR u.last_name ILIKE CONCAT('%', :textSearch, '%'))",
+           countQuery = "SELECT count(u.id) FROM tb_user u " +
+                        "INNER JOIN entity_group_relation egr ON egr.entity_id = u.id " +
+                        "WHERE egr.group_id = :groupId AND egr.entity_type = 'USER' " +
+                        "AND (:textSearch IS NULL OR u.email ILIKE CONCAT('%', :textSearch, '%') " +
+                        "OR u.first_name ILIKE CONCAT('%', :textSearch, '%') " +
+                        "OR u.last_name ILIKE CONCAT('%', :textSearch, '%'))",
+           nativeQuery = true)
+    Page<UserEntity> findByEntityGroupId(
+            @Param("groupId") UUID groupId,
+            @Param("textSearch") String textSearch,
+            Pageable pageable);
+
 }
