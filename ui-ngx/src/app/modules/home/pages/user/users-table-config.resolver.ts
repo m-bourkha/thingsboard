@@ -33,6 +33,7 @@ import { map, mergeMap, take } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
+import { EntityId } from '@shared/models/id/entity-id';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { AddUserDialogComponent, AddUserDialogData } from '@modules/home/pages/user/add-user-dialog.component';
@@ -51,7 +52,6 @@ import { TenantService } from '@app/core/http/tenant.service';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 import { EntityGroupService } from '@core/http/entity-group.service';
-import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 export interface UsersTableRouteData {
   authority: Authority;
@@ -73,7 +73,6 @@ export class UsersTableConfigResolver  {
               private tenantService: TenantService,
               private customerService: CustomerService,
               private entityGroupService: EntityGroupService,
-              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -114,30 +113,20 @@ export class UsersTableConfigResolver  {
         this.updateActionCellDescriptors(auth);
 
         if (entityGroupId) {
-          // User group members: list the users belonging to the opened group and let the user
-          // attach existing users to it (no nested groups, unlike customers).
+          // User group members: list the users belonging to the opened group. The add button
+          // creates a brand new user and assigns it to the current group (no nested groups,
+          // unlike customers).
           this.authority = Authority.TENANT_ADMIN;
           this.tenantId = this.authUser.tenantId.id;
           this.customerId = NULL_UUID;
           this.config.entitiesFetchFunction = pageLink =>
             this.entityGroupService.getEntitiesByGroup<User>(entityGroupId, pageLink);
           this.config.saveEntity = user => this.userService.saveUser(user);
-          this.config.entitiesDeleteEnabled = false;
+          this.config.entitiesDeleteEnabled = true;
           this.config.addEnabled = true;
-          this.config.addActionDescriptors = [
-            {
-              name: this.translate.instant('entityGroup.add-users'),
-              icon: 'add',
-              isEnabled: () => true,
-              onAction: () => {
-                this.homeDialogs.addUsersToGroup(entityGroupId).subscribe(result => {
-                  if (result) {
-                    this.config.updateData();
-                  }
-                });
-              }
-            }
-          ];
+          this.config.deleteEnabled = () => true;
+          this.config.addActionDescriptors = [];
+          this.config.addEntity = () => this.addUserToGroup(entityGroupId);
           return this.entityGroupService.getEntityGroup(entityGroupId).pipe(
             map(group => {
               this.config.tableTitle = `${group.name}: ${this.translate.instant('user.users')}`;
@@ -151,6 +140,7 @@ export class UsersTableConfigResolver  {
         this.config.entitiesDeleteEnabled = true;
         this.config.addEnabled = true;
         this.config.addActionDescriptors = [];
+        this.config.addEntity = () => this.addUser();
 
         if (customerId) {
           this.authority = Authority.CUSTOMER_USER;
@@ -238,6 +228,18 @@ export class UsersTableConfigResolver  {
       delete user.additionalInfo.unitSystem;
     }
     return this.userService.saveUser(user);
+  }
+
+  addUserToGroup(groupId: string): Observable<User> {
+    return this.addUser().pipe(
+      mergeMap((user) => {
+        if (!user) {
+          return of(null);
+        }
+        const ids: EntityId[] = [{ entityType: EntityType.USER, id: user.id.id }];
+        return this.entityGroupService.addEntitiesToGroup(groupId, ids).pipe(map(() => user));
+      })
+    );
   }
 
   addUser(): Observable<User> {

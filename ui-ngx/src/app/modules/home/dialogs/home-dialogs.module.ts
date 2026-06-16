@@ -22,7 +22,6 @@ import { AddEntitiesToCustomerDialogComponent } from '@modules/home/dialogs/add-
 import { HomeDialogsService } from './home-dialogs.service';
 import { AddEntitiesToEdgeDialogComponent } from '@home/dialogs/add-entities-to-edge-dialog.component';
 import { AddCustomersToGroupDialogComponent } from '@home/dialogs/add-customers-to-group-dialog.component';
-import { AddUsersToGroupDialogComponent } from '@home/dialogs/add-users-to-group-dialog.component';
 
 @NgModule({
   declarations:
@@ -30,8 +29,7 @@ import { AddUsersToGroupDialogComponent } from '@home/dialogs/add-users-to-group
     AssignToCustomerDialogComponent,
     AddEntitiesToCustomerDialogComponent,
     AddEntitiesToEdgeDialogComponent,
-    AddCustomersToGroupDialogComponent,
-    AddUsersToGroupDialogComponent
+    AddCustomersToGroupDialogComponent
   ],
   imports: [
     CommonModule,
@@ -41,8 +39,7 @@ import { AddUsersToGroupDialogComponent } from '@home/dialogs/add-users-to-group
     AssignToCustomerDialogComponent,
     AddEntitiesToCustomerDialogComponent,
     AddEntitiesToEdgeDialogComponent,
-    AddCustomersToGroupDialogComponent,
-    AddUsersToGroupDialogComponent
+    AddCustomersToGroupDialogComponent
   ],
   providers: [
     HomeDialogsService
