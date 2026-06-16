@@ -26,6 +26,10 @@ import {
   AddCustomersToGroupDialogComponent,
   AddCustomersToGroupDialogData
 } from '@home/dialogs/add-customers-to-group-dialog.component';
+import {
+  AddUsersToGroupDialogComponent,
+  AddUsersToGroupDialogData
+} from '@home/dialogs/add-users-to-group-dialog.component';
 
 @Injectable()
 export class HomeDialogsService {
@@ -48,6 +52,16 @@ export class HomeDialogsService {
   public addCustomersToGroup(groupId: string): Observable<boolean> {
     return this.dialog.open<AddCustomersToGroupDialogComponent, AddCustomersToGroupDialogData, boolean>(
       AddCustomersToGroupDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: { groupId }
+      }
+    ).afterClosed();
+  }
+
+  public addUsersToGroup(groupId: string): Observable<boolean> {
+    return this.dialog.open<AddUsersToGroupDialogComponent, AddUsersToGroupDialogData, boolean>(
+      AddUsersToGroupDialogComponent, {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { groupId }

@@ -29,7 +29,7 @@ import { User } from '@shared/models/user.model';
 import { UserService } from '@core/http/user.service';
 import { UserComponent } from '@modules/home/pages/user/user.component';
 import { CustomerService } from '@core/http/customer.service';
-import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { map, mergeMap, take } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
@@ -50,7 +50,8 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TenantService } from '@app/core/http/tenant.service';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
-import { isDefinedAndNotNull } from '@core/utils';
+import { EntityGroupService } from '@core/http/entity-group.service';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 export interface UsersTableRouteData {
   authority: Authority;
@@ -71,6 +72,8 @@ export class UsersTableConfigResolver  {
               private authService: AuthService,
               private tenantService: TenantService,
               private customerService: CustomerService,
+              private entityGroupService: EntityGroupService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -103,39 +106,109 @@ export class UsersTableConfigResolver  {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<User>> {
-    const routeParams = route.params;
+    const { entityGroupId, customerId, tenantId } = this.collectAncestorIds(route);
+
     return this.store.pipe(select(selectAuth), take(1)).pipe(
-      tap((auth) => {
+      mergeMap((auth) => {
         this.authUser = auth.userDetails;
-        this.authority = routeParams.tenantId ? Authority.TENANT_ADMIN : Authority.CUSTOMER_USER;
-        if (this.authority === Authority.TENANT_ADMIN) {
-          this.tenantId = routeParams.tenantId;
+        this.updateActionCellDescriptors(auth);
+
+        if (entityGroupId) {
+          // User group members: list the users belonging to the opened group and let the user
+          // attach existing users to it (no nested groups, unlike customers).
+          this.authority = Authority.TENANT_ADMIN;
+          this.tenantId = this.authUser.tenantId.id;
+          this.customerId = NULL_UUID;
+          this.config.entitiesFetchFunction = pageLink =>
+            this.entityGroupService.getEntitiesByGroup<User>(entityGroupId, pageLink);
+          this.config.saveEntity = user => this.userService.saveUser(user);
+          this.config.entitiesDeleteEnabled = false;
+          this.config.addEnabled = true;
+          this.config.addActionDescriptors = [
+            {
+              name: this.translate.instant('entityGroup.add-users'),
+              icon: 'add',
+              isEnabled: () => true,
+              onAction: () => {
+                this.homeDialogs.addUsersToGroup(entityGroupId).subscribe(result => {
+                  if (result) {
+                    this.config.updateData();
+                  }
+                });
+              }
+            }
+          ];
+          return this.entityGroupService.getEntityGroup(entityGroupId).pipe(
+            map(group => {
+              this.config.tableTitle = `${group.name}: ${this.translate.instant('user.users')}`;
+              return this.config;
+            })
+          );
+        }
+
+        // Non-group contexts share the default "create user" add button and bulk delete.
+        this.config.saveEntity = user => this.saveUser(user);
+        this.config.entitiesDeleteEnabled = true;
+        this.config.addEnabled = true;
+        this.config.addActionDescriptors = [];
+
+        if (customerId) {
+          this.authority = Authority.CUSTOMER_USER;
+          this.tenantId = this.authUser.tenantId.id;
+          this.customerId = customerId;
+          this.config.entitiesFetchFunction = pageLink => this.userService.getCustomerUsers(this.customerId, pageLink);
+          return this.customerService.getCustomer(this.customerId).pipe(
+            map(customer => {
+              this.config.tableTitle = customer.title + ': ' + this.translate.instant('user.customer-users');
+              return this.config;
+            })
+          );
+        } else if (tenantId) {
+          this.authority = Authority.TENANT_ADMIN;
+          this.tenantId = tenantId;
           this.customerId = NULL_UUID;
           this.config.entitiesFetchFunction = pageLink => this.userService.getTenantAdmins(this.tenantId, pageLink);
-        } else {
-          this.tenantId = this.authUser.tenantId.id;
-          this.customerId = routeParams.customerId;
-          this.config.entitiesFetchFunction = pageLink => this.userService.getCustomerUsers(this.customerId, pageLink);
+          return this.tenantService.getTenant(this.tenantId).pipe(
+            map(tenant => {
+              this.config.tableTitle = tenant.title + ': ' + this.translate.instant('user.tenant-admins');
+              return this.config;
+            })
+          );
         }
-        this.updateActionCellDescriptors(auth);
-      }),
-      mergeMap(() => {
-        if (this.authority === Authority.TENANT_ADMIN) {
-          return this.tenantService.getTenant(this.tenantId);
-        } else if (isDefinedAndNotNull(this.customerId)) {
-          return this.customerService.getCustomer(this.customerId);
-        }
-        return of({title: ''});
-      }),
-      map((parentEntity) => {
-        if (this.authority === Authority.TENANT_ADMIN) {
-          this.config.tableTitle = parentEntity.title + ': ' + this.translate.instant('user.tenant-admins');
-        } else {
-          this.config.tableTitle = parentEntity.title + ': ' + this.translate.instant('user.customer-users');
-        }
-        return this.config;
+
+        // Top-level Users menu: every user in the current tenant.
+        this.authority = Authority.TENANT_ADMIN;
+        this.tenantId = this.authUser.tenantId.id;
+        this.customerId = NULL_UUID;
+        this.config.entitiesFetchFunction = pageLink => this.userService.getUsers(pageLink);
+        this.config.tableTitle = this.translate.instant('user.users');
+        return of(this.config);
       })
     );
+  }
+
+  private collectAncestorIds(route: ActivatedRouteSnapshot): {
+    entityGroupId: string | null;
+    customerId: string | null;
+    tenantId: string | null;
+  } {
+    let cur: ActivatedRouteSnapshot | null = route;
+    let entityGroupId: string | null = null;
+    let customerId: string | null = null;
+    let tenantId: string | null = null;
+    while (cur) {
+      if (!entityGroupId && cur.params?.entityGroupId) {
+        entityGroupId = cur.params.entityGroupId;
+      }
+      if (!customerId && cur.params?.customerId) {
+        customerId = cur.params.customerId;
+      }
+      if (!tenantId && cur.params?.tenantId) {
+        tenantId = cur.params.tenantId;
+      }
+      cur = cur.parent;
+    }
+    return { entityGroupId, customerId, tenantId };
   }
 
   updateActionCellDescriptors(auth: AuthState) {
