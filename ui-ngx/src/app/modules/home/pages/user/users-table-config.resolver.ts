@@ -115,10 +115,11 @@ export class UsersTableConfigResolver  {
         if (entityGroupId) {
           // User group members: list the users belonging to the opened group. The add button
           // creates a brand new user and assigns it to the current group (no nested groups,
-          // unlike customers).
-          this.authority = Authority.TENANT_ADMIN;
+          // unlike customers). When the group is opened within a customer scope, new users
+          // belong to that customer; otherwise they are tenant-level users.
+          this.authority = customerId ? Authority.CUSTOMER_USER : Authority.TENANT_ADMIN;
           this.tenantId = this.authUser.tenantId.id;
-          this.customerId = NULL_UUID;
+          this.customerId = customerId ?? NULL_UUID;
           this.config.entitiesFetchFunction = pageLink =>
             this.entityGroupService.getEntitiesByGroup<User>(entityGroupId, pageLink);
           this.config.saveEntity = user => this.userService.saveUser(user);

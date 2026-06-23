@@ -205,7 +205,10 @@ const routes: Routes = [
       },
       {
         path: ':customerId/users',
+        component: RouterTabsComponent,
         data: {
+          auth: [Authority.TENANT_ADMIN],
+          useChildrenRoutesForTabs: true,
           breadcrumb: {
             label: 'user.customer-users',
             icon: 'account_circle'
@@ -214,14 +217,80 @@ const routes: Routes = [
         children: [
           {
             path: '',
+            pathMatch: 'full',
+            redirectTo: 'all'
+          },
+          {
+            path: 'all',
             component: EntitiesTableComponent,
             data: {
               auth: [Authority.TENANT_ADMIN],
-              title: 'user.customer-users'
+              title: 'user.customer-users',
+              breadcrumb: {
+                label: 'user.all',
+                icon: 'account_circle'
+              }
             },
             resolve: {
               entitiesTableConfig: UsersTableConfigResolver
             }
+          },
+          {
+            path: 'groups',
+            data: {
+              auth: [Authority.TENANT_ADMIN],
+              entityType: EntityType.USER,
+              title: 'entityGroup.user-groups',
+              breadcrumb: {
+                label: 'entityGroup.groups',
+                icon: 'group_work'
+              }
+            },
+            children: [
+              {
+                path: '',
+                component: EntitiesTableComponent,
+                data: {
+                  auth: [Authority.TENANT_ADMIN],
+                  entityType: EntityType.USER,
+                  title: 'entityGroup.user-groups'
+                },
+                resolve: {
+                  entitiesTableConfig: EntityGroupsTableConfigResolver
+                }
+              },
+              {
+                path: ':entityGroupId',
+                resolve: {
+                  entityGroup: entityGroupBreadcrumbResolver
+                },
+                data: {
+                  auth: [Authority.TENANT_ADMIN],
+                  breadcrumb: {
+                    labelFunction: entityGroupScopeBreadcrumbLabelFunction,
+                    icon: 'group_work'
+                  } as BreadCrumbConfig<any>
+                },
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    redirectTo: 'users/all'
+                  },
+                  {
+                    path: 'users/all',
+                    component: EntitiesTableComponent,
+                    data: {
+                      auth: [Authority.TENANT_ADMIN],
+                      title: 'user.users'
+                    },
+                    resolve: {
+                      entitiesTableConfig: UsersTableConfigResolver
+                    }
+                  }
+                ]
+              }
+            ]
           },
           {
             path: ':entityId',
