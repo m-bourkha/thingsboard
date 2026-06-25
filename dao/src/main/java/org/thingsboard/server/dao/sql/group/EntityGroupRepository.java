@@ -89,6 +89,13 @@ public interface EntityGroupRepository extends JpaRepository<EntityGroupEntity, 
             @Param("groupId") UUID groupId,
             @Param("entityId") UUID entityId);
 
+    @Query(value = "SELECT entity_id FROM entity_group_relation " +
+                   "WHERE group_id = :groupId AND entity_type = :entityType",
+           nativeQuery = true)
+    List<UUID> findEntityIdsByGroupIdAndType(
+            @Param("groupId") UUID groupId,
+            @Param("entityType") String entityType);
+
     @Query("SELECT g FROM EntityGroupEntity g WHERE g.tenantId = :tenantId " +
            "AND (:textSearch IS NULL OR ilike(g.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<EntityGroupEntity> findByTenantId(

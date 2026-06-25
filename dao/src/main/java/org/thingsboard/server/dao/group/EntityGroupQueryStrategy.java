@@ -21,9 +21,21 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.util.Map;
+
 public interface EntityGroupQueryStrategy<E> {
 
     EntityType supportedType();
 
     PageData<E> findEntitiesInGroup(TenantId tenantId, EntityGroupId groupId, PageLink pageLink);
+
+    /**
+     * Variant that accepts entity-type-specific filters (e.g. {@code deviceProfileId} for devices).
+     * Default implementation ignores the filters and delegates to the basic lookup, so strategies
+     * that do not support extra filtering need not override it.
+     */
+    default PageData<E> findEntitiesInGroup(TenantId tenantId, EntityGroupId groupId, PageLink pageLink,
+                                            Map<String, String> filters) {
+        return findEntitiesInGroup(tenantId, groupId, pageLink);
+    }
 }

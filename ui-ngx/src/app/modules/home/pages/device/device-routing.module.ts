@@ -28,11 +28,19 @@ import { MenuId } from '@core/services/menu.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
 import { GroupedEntitiesTableConfigResolver } from '@home/components/group/grouped-entities-table-config.resolver';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import {
+  entityGroupBreadcrumbResolver,
+  entityGroupScopeBreadcrumbLabelFunction
+} from '@modules/home/pages/customer/customer-routing.module';
 
 export const deviceRoutes: Routes = [
   {
     path: 'devices',
+    component: RouterTabsComponent,
     data: {
+      auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      useChildrenRoutesForTabs: true,
       breadcrumb: {
         menuId: MenuId.devices
       }
@@ -40,15 +48,82 @@ export const deviceRoutes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
+        redirectTo: 'all'
+      },
+      {
+        path: 'all',
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           title: 'device.devices',
-          devicesType: 'tenant'
+          devicesType: 'tenant',
+          breadcrumb: {
+            label: 'device.all',
+            icon: 'devices_other'
+          }
         },
         resolve: {
           entitiesTableConfig: DevicesTableConfigResolver
         }
+      },
+      {
+        path: 'groups',
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.DEVICE,
+          title: 'entityGroup.device-groups',
+          breadcrumb: {
+            label: 'entityGroup.groups',
+            icon: 'group_work'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              entityType: EntityType.DEVICE,
+              title: 'entityGroup.device-groups'
+            },
+            resolve: {
+              entitiesTableConfig: EntityGroupsTableConfigResolver
+            }
+          },
+          {
+            path: ':entityGroupId',
+            resolve: {
+              entityGroup: entityGroupBreadcrumbResolver
+            },
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              breadcrumb: {
+                labelFunction: entityGroupScopeBreadcrumbLabelFunction,
+                icon: 'group_work'
+              } as BreadCrumbConfig<any>
+            },
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                redirectTo: 'devices/all'
+              },
+              {
+                path: 'devices/all',
+                component: EntitiesTableComponent,
+                data: {
+                  auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+                  entityType: EntityType.DEVICE,
+                  title: 'entityGroup.group-entities'
+                },
+                resolve: {
+                  entitiesTableConfig: GroupedEntitiesTableConfigResolver
+                }
+              }
+            ]
+          }
+        ]
       },
       {
         path: ':entityId',
@@ -65,33 +140,6 @@ export const deviceRoutes: Routes = [
         },
         resolve: {
           entitiesTableConfig: DevicesTableConfigResolver
-        }
-      },
-      {
-        path: 'groups',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          entityType: EntityType.DEVICE,
-          title: 'entityGroup.device-groups',
-          breadcrumb: {
-            label: 'entityGroup.device-groups',
-            icon: 'group_work'
-          }
-        },
-        resolve: {
-          entitiesTableConfig: EntityGroupsTableConfigResolver
-        }
-      },
-      {
-        path: 'groups/:entityGroupId/entities',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          entityType: EntityType.DEVICE
-        },
-        resolve: {
-          entitiesTableConfig: GroupedEntitiesTableConfigResolver
         }
       }
     ]

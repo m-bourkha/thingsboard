@@ -40,11 +40,11 @@ public class EntityGroupQueryStrategyRegistry {
     }
 
     @SuppressWarnings("unchecked")
-    public <E> PageData<E> findEntitiesInGroup(EntityGroup group, PageLink pageLink) {
+    public <E> PageData<E> findEntitiesInGroup(EntityGroup group, PageLink pageLink, Map<String, String> filters) {
         EntityGroupQueryStrategy<E> strategy = (EntityGroupQueryStrategy<E>) registry.get(group.getType());
         if (strategy == null) {
             throw new IllegalStateException("No entity group query strategy registered for type: " + group.getType());
         }
-        return strategy.findEntitiesInGroup(group.getTenantId(), group.getId(), pageLink);
+        return strategy.findEntitiesInGroup(group.getTenantId(), group.getId(), pageLink, filters);
     }
 }

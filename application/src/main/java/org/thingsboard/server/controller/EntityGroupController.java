@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -48,7 +49,9 @@ import org.thingsboard.server.service.entitiy.group.TbEntityGroupService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -163,12 +166,18 @@ public class EntityGroupController extends BaseController {
             @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true) @RequestParam int page,
             @Parameter(description = "Text search") @RequestParam(required = false) String textSearch,
             @Parameter(description = SORT_PROPERTY_DESCRIPTION) @RequestParam(required = false) String sortProperty,
-            @Parameter(description = SORT_ORDER_DESCRIPTION) @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @Parameter(description = SORT_ORDER_DESCRIPTION) @RequestParam(required = false) String sortOrder,
+            @Parameter(description = "A string value representing the device profile id to filter device group members by")
+            @RequestParam(required = false) String deviceProfileId) throws ThingsboardException {
         checkParameter("entityGroupId", strEntityGroupId);
         EntityGroupId entityGroupId = new EntityGroupId(toUUID(strEntityGroupId));
         EntityGroup entityGroup = checkEntityId(entityGroupId, entityGroupService::findEntityGroupById, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(strategyRegistry.findEntitiesInGroup(entityGroup, pageLink));
+        Map<String, String> filters = new HashMap<>();
+        if (StringUtils.isNotEmpty(deviceProfileId)) {
+            filters.put("deviceProfileId", deviceProfileId);
+        }
+        return checkNotNull(strategyRegistry.findEntitiesInGroup(entityGroup, pageLink, filters));
     }
 
     @ApiOperation(value = "Add entities to group (addEntitiesToGroup)",

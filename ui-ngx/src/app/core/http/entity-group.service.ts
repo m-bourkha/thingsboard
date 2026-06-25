@@ -64,11 +64,13 @@ export class EntityGroupService {
     return this.http.delete<void>(`/api/entityGroup/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getEntitiesByGroup<T>(groupId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<T>> {
-    return this.http.get<PageData<T>>(
-      `/api/entityGroup/${groupId}/entities${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config)
-    );
+  public getEntitiesByGroup<T>(groupId: string, pageLink: PageLink, deviceProfileId?: string,
+                               config?: RequestConfig): Observable<PageData<T>> {
+    let url = `/api/entityGroup/${groupId}/entities${pageLink.toQuery()}`;
+    if (deviceProfileId) {
+      url += `&deviceProfileId=${deviceProfileId}`;
+    }
+    return this.http.get<PageData<T>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public addEntitiesToGroup(groupId: string, entityIds: EntityId[], config?: RequestConfig): Observable<void> {

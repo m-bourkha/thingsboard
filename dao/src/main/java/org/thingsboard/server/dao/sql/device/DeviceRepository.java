@@ -217,11 +217,11 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
     @Query(value = "SELECT d.* FROM device d " +
                    "INNER JOIN entity_group_relation egr ON egr.entity_id = d.id " +
                    "WHERE egr.group_id = :groupId AND egr.entity_type = 'DEVICE' " +
-                   "AND (:textSearch IS NULL OR d.search_text ILIKE CONCAT('%', :textSearch, '%'))",
+                   "AND (:textSearch IS NULL OR d.name ILIKE CONCAT('%', :textSearch, '%'))",
            countQuery = "SELECT count(d.id) FROM device d " +
                         "INNER JOIN entity_group_relation egr ON egr.entity_id = d.id " +
                         "WHERE egr.group_id = :groupId AND egr.entity_type = 'DEVICE' " +
-                        "AND (:textSearch IS NULL OR d.search_text ILIKE CONCAT('%', :textSearch, '%'))",
+                        "AND (:textSearch IS NULL OR d.name ILIKE CONCAT('%', :textSearch, '%'))",
            nativeQuery = true)
     Page<DeviceEntity> findByEntityGroupId(
             @Param("groupId") UUID groupId,
