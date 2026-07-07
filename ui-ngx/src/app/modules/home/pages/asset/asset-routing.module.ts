@@ -28,11 +28,19 @@ import { MenuId } from '@core/services/menu.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
 import { GroupedEntitiesTableConfigResolver } from '@home/components/group/grouped-entities-table-config.resolver';
+import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import {
+  entityGroupBreadcrumbResolver,
+  entityGroupScopeBreadcrumbLabelFunction
+} from '@modules/home/pages/customer/customer-routing.module';
 
 export const assetRoutes: Routes = [
   {
     path: 'assets',
+    component: RouterTabsComponent,
     data: {
+      auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      useChildrenRoutesForTabs: true,
       breadcrumb: {
         menuId: MenuId.assets
       }
@@ -40,15 +48,82 @@ export const assetRoutes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
+        redirectTo: 'all'
+      },
+      {
+        path: 'all',
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           title: 'asset.assets',
-          assetsType: 'tenant'
+          assetsType: 'tenant',
+          breadcrumb: {
+            label: 'asset.all',
+            icon: 'domain'
+          }
         },
         resolve: {
           entitiesTableConfig: AssetsTableConfigResolver
         }
+      },
+      {
+        path: 'groups',
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          entityType: EntityType.ASSET,
+          title: 'entityGroup.asset-groups',
+          breadcrumb: {
+            label: 'entityGroup.groups',
+            icon: 'group_work'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              entityType: EntityType.ASSET,
+              title: 'entityGroup.asset-groups'
+            },
+            resolve: {
+              entitiesTableConfig: EntityGroupsTableConfigResolver
+            }
+          },
+          {
+            path: ':entityGroupId',
+            resolve: {
+              entityGroup: entityGroupBreadcrumbResolver
+            },
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              breadcrumb: {
+                labelFunction: entityGroupScopeBreadcrumbLabelFunction,
+                icon: 'group_work'
+              } as BreadCrumbConfig<any>
+            },
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                redirectTo: 'assets/all'
+              },
+              {
+                path: 'assets/all',
+                component: EntitiesTableComponent,
+                data: {
+                  auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+                  entityType: EntityType.ASSET,
+                  title: 'entityGroup.group-entities'
+                },
+                resolve: {
+                  entitiesTableConfig: GroupedEntitiesTableConfigResolver
+                }
+              }
+            ]
+          }
+        ]
       },
       {
         path: ':entityId',
@@ -65,33 +140,6 @@ export const assetRoutes: Routes = [
         },
         resolve: {
           entitiesTableConfig: AssetsTableConfigResolver
-        }
-      },
-      {
-        path: 'groups',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          entityType: EntityType.ASSET,
-          title: 'entityGroup.asset-groups',
-          breadcrumb: {
-            label: 'entityGroup.asset-groups',
-            icon: 'group_work'
-          }
-        },
-        resolve: {
-          entitiesTableConfig: EntityGroupsTableConfigResolver
-        }
-      },
-      {
-        path: 'groups/:entityGroupId/entities',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          entityType: EntityType.ASSET
-        },
-        resolve: {
-          entitiesTableConfig: GroupedEntitiesTableConfigResolver
         }
       }
     ]

@@ -39,11 +39,16 @@ import {
 import { DeviceTableHeaderComponent } from '@home/pages/device/device-table-header.component';
 import { DeviceComponent } from '@home/pages/device/device.component';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
+import { AssetComponent } from '@home/pages/asset/asset.component';
+import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 import { MatDialog } from '@angular/material/dialog';
 import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
+import { AddEntityDialogComponent } from '@home/components/entity/add-entity-dialog.component';
 import { AddEntityDialogData } from '@home/models/entity/entity-component.models';
-import { Device, DeviceInfo } from '@shared/models/device.models';
+import { Device } from '@shared/models/device.models';
+import { Asset } from '@shared/models/asset.models';
 import { DeviceService } from '@core/http/device.service';
+import { AssetService } from '@core/http/asset.service';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -53,6 +58,7 @@ export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableCo
   constructor(
     private entityGroupService: EntityGroupService,
     private deviceService: DeviceService,
+    private assetService: AssetService,
     private dialogService: DialogService,
     private translate: TranslateService,
     private datePipe: DatePipe,
@@ -94,6 +100,25 @@ export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableCo
       config.groupActionDescriptors = this.configureGroupActions(config, entityGroupId);
     }
 
+    if (entityType === EntityType.ASSET) {
+      // No custom header: the asset-profile filter relies on backend filtering the
+      // group-entities endpoint does not support (only device profile is supported there).
+      // The default table header still provides the title, search and add button.
+      config.addEnabled = true;
+      config.addEntity = () => this.addEntityToGroup(config, entityGroupId);
+
+      // Enable the asset details side panel, like the All assets tab.
+      config.detailsPanelEnabled = true;
+      config.entityComponent = AssetComponent;
+      config.entityTabsComponent = AssetTabsComponent;
+      config.loadEntity = id => this.assetService.getAssetInfo(id.id);
+      config.saveEntity = asset => this.assetService.saveAsset(asset as Asset).pipe(
+        mergeMap(savedAsset => this.assetService.getAssetInfo(savedAsset.id.id)));
+
+      config.cellActionDescriptors = this.configureCellActions(config, entityGroupId);
+      config.groupActionDescriptors = this.configureGroupActions(config, entityGroupId);
+    }
+
     config.entitiesFetchFunction = pageLink =>
       this.entityGroupService.getEntitiesByGroup(entityGroupId, pageLink,
         config.componentsData?.deviceInfoFilter?.deviceProfileId?.id);
@@ -124,6 +149,8 @@ export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableCo
     );
   }
 
+  // Generic "Remove from group" actions, shared by every specially-configured entity type
+  // (device, asset, ...). The single enabled group action also surfaces the selection checkboxes.
   private configureCellActions(config: EntityTableConfig<BaseData<HasId>>,
                                entityGroupId: string): Array<CellActionDescriptor<BaseData<HasId>>> {
     return [
@@ -131,7 +158,7 @@ export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableCo
         name: this.translate.instant('entityGroup.remove-from-group'),
         icon: 'group_remove',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.removeFromGroup($event, config, entityGroupId, entity as DeviceInfo)
+        onAction: ($event, entity) => this.removeEntityFromGroup($event, config, entityGroupId, entity)
       }
     ];
   }
@@ -144,50 +171,71 @@ export class GroupedEntitiesTableConfigResolver implements Resolve<EntityTableCo
         icon: 'group_remove',
         isEnabled: true,
         onAction: ($event, entities) =>
-          this.removeDevicesFromGroup($event, config, entityGroupId, entities as DeviceInfo[])
+          this.removeEntitiesFromGroup($event, config, entityGroupId, entities)
       }
     ];
   }
 
-  private removeFromGroup($event: Event, config: EntityTableConfig<BaseData<HasId>>,
-                          entityGroupId: string, device: DeviceInfo): void {
+  private removeEntityFromGroup($event: Event, config: EntityTableConfig<BaseData<HasId>>,
+                                entityGroupId: string, entity: BaseData<HasId>): void {
     if ($event) {
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('entityGroup.remove-device-from-group-title', {deviceName: device.name}),
-      this.translate.instant('entityGroup.remove-device-from-group-text'),
+      this.translate.instant('entityGroup.remove-entity-from-group-title', {entityName: entity.name}),
+      this.translate.instant('entityGroup.remove-entity-from-group-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
       true
     ).subscribe((res) => {
       if (res) {
-        this.entityGroupService.removeEntitiesFromGroup(entityGroupId, [device.id]).subscribe(
+        this.entityGroupService.removeEntitiesFromGroup(entityGroupId, [entity.id as EntityId]).subscribe(
           () => config.updateData()
         );
       }
     });
   }
 
-  private removeDevicesFromGroup($event: Event, config: EntityTableConfig<BaseData<HasId>>,
-                                 entityGroupId: string, devices: DeviceInfo[]): void {
+  private removeEntitiesFromGroup($event: Event, config: EntityTableConfig<BaseData<HasId>>,
+                                  entityGroupId: string, entities: BaseData<HasId>[]): void {
     if ($event) {
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('entityGroup.remove-devices-from-group-title', {count: devices.length}),
-      this.translate.instant('entityGroup.remove-devices-from-group-text'),
+      this.translate.instant('entityGroup.remove-entities-from-group-title', {count: entities.length}),
+      this.translate.instant('entityGroup.remove-entities-from-group-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
       true
     ).subscribe((res) => {
       if (res) {
-        const entityIds: EntityId[] = devices.map(device => device.id);
+        const entityIds: EntityId[] = entities.map(entity => entity.id as EntityId);
         this.entityGroupService.removeEntitiesFromGroup(entityGroupId, entityIds).subscribe(
           () => config.updateData()
         );
       }
     });
+  }
+
+  // Generic add-to-group: create an entity via the standard add dialog (driven by the
+  // configured entityComponent + saveEntity), then add the saved entity to the group.
+  private addEntityToGroup(config: EntityTableConfig<BaseData<HasId>>,
+                           entityGroupId: string): Observable<BaseData<HasId>> {
+    return this.dialog.open<AddEntityDialogComponent, AddEntityDialogData<BaseData<HasId>>, BaseData<HasId>>(
+      AddEntityDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          entitiesTableConfig: config
+        }
+      }).afterClosed().pipe(
+      mergeMap((entity) => {
+        if (entity) {
+          return this.entityGroupService.addEntitiesToGroup(entityGroupId, [entity.id as EntityId]).pipe(map(() => entity));
+        }
+        return of(null);
+      })
+    );
   }
 
   private buildColumns(config: EntityTableConfig<BaseData<HasId>>, entityType: EntityType, group: EntityGroup): void {
