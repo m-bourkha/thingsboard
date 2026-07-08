@@ -145,6 +145,8 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       if (provider === AiProvider.OPENAI) {
         this.aiModelForms.get('configuration.providerConfig.baseUrl').patchValue(this.openAiDefaultBaseUrl, {emitEvent: false});
         this.updateApiKeyValidatorForOpenAIProvider(this.openAiDefaultBaseUrl);
+      } else {
+        this.restoreApiKeyRequiredValidator();
       }
     });
 
@@ -190,6 +192,13 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       this.aiModelForms.get('configuration.providerConfig.apiKey').addValidators(Validators.required);
       this.apiKeyRequired = true;
     }
+    this.aiModelForms.get('configuration.providerConfig.apiKey').updateValueAndValidity({emitEvent: false});
+  }
+
+  // OpenAI with a custom base URL drops the required validator; every other provider always needs the key back
+  private restoreApiKeyRequiredValidator() {
+    this.aiModelForms.get('configuration.providerConfig.apiKey').addValidators(Validators.required);
+    this.apiKeyRequired = true;
     this.aiModelForms.get('configuration.providerConfig.apiKey').updateValueAndValidity({emitEvent: false});
   }
 

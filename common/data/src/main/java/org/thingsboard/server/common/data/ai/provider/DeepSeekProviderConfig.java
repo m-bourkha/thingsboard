@@ -15,9 +15,10 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OllamaProviderConfig,
-        DeepSeekProviderConfig {}
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+
+@Schema
+public record DeepSeekProviderConfig(
+        @NotNull String apiKey
+) implements AiProviderConfig {}

@@ -37,4 +37,6 @@ public interface Langchain4jChatModelConfigurer {
 
     ChatModel configureChatModel(OllamaChatModelConfig chatModelConfig);
 
+    ChatModel configureChatModel(DeepSeekChatModelConfig chatModelConfig);
+
 }

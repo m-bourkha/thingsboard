@@ -25,6 +25,7 @@ public enum AiProvider {
     ANTHROPIC,
     AMAZON_BEDROCK,
     GITHUB_MODELS,
-    OLLAMA
+    OLLAMA,
+    DEEPSEEK
 
 }

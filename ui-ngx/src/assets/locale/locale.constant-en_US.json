@@ -1587,7 +1587,8 @@
             "anthropic": "Anthropic",
             "amazon-bedrock": "Amazon Bedrock",
             "github-models": "GitHub Models",
-            "ollama": "Ollama"
+            "ollama": "Ollama",
+            "deepseek": "DeepSeek"
         },
         "name-required": "Name is required.",
         "name-max-length": "Name must be 255 characters or less.",

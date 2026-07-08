@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.DeepSeekChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.DeepSeekProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GitHubModelsProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
@@ -55,7 +57,8 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
         @JsonSubTypes.Type(value = AnthropicChatModelConfig.class, name = "ANTHROPIC"),
         @JsonSubTypes.Type(value = AmazonBedrockChatModelConfig.class, name = "AMAZON_BEDROCK"),
         @JsonSubTypes.Type(value = GitHubModelsChatModelConfig.class, name = "GITHUB_MODELS"),
-        @JsonSubTypes.Type(value = OllamaChatModelConfig.class, name = "OLLAMA")
+        @JsonSubTypes.Type(value = OllamaChatModelConfig.class, name = "OLLAMA"),
+        @JsonSubTypes.Type(value = DeepSeekChatModelConfig.class, name = "DEEPSEEK")
 })
 @Schema(
         name = "AiModelConfig",
@@ -70,7 +73,8 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
                 @DiscriminatorMapping(value = "ANTHROPIC", schema = AnthropicChatModelConfig.class),
                 @DiscriminatorMapping(value = "AMAZON_BEDROCK", schema = AmazonBedrockChatModelConfig.class),
                 @DiscriminatorMapping(value = "GITHUB_MODELS", schema = GitHubModelsChatModelConfig.class),
-                @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class)
+                @DiscriminatorMapping(value = "OLLAMA", schema = OllamaChatModelConfig.class),
+                @DiscriminatorMapping(value = "DEEPSEEK", schema = DeepSeekChatModelConfig.class)
         }
 )
 public interface AiModelConfig {
@@ -96,7 +100,8 @@ public interface AiModelConfig {
             @JsonSubTypes.Type(value = AnthropicProviderConfig.class, name = "ANTHROPIC"),
             @JsonSubTypes.Type(value = AmazonBedrockProviderConfig.class, name = "AMAZON_BEDROCK"),
             @JsonSubTypes.Type(value = GitHubModelsProviderConfig.class, name = "GITHUB_MODELS"),
-            @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA")
+            @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA"),
+            @JsonSubTypes.Type(value = DeepSeekProviderConfig.class, name = "DEEPSEEK")
     })
     AiProviderConfig providerConfig();
 

@@ -66,7 +66,8 @@ export enum AiProvider {
   ANTHROPIC = 'ANTHROPIC',
   AMAZON_BEDROCK = 'AMAZON_BEDROCK',
   GITHUB_MODELS = 'GITHUB_MODELS',
-  OLLAMA = 'OLLAMA'
+  OLLAMA = 'OLLAMA',
+  DEEPSEEK = 'DEEPSEEK'
 }
 
 export const AiProviderTranslations = new Map<AiProvider, string>(
@@ -79,7 +80,8 @@ export const AiProviderTranslations = new Map<AiProvider, string>(
     [AiProvider.ANTHROPIC , 'ai-models.ai-providers.anthropic'],
     [AiProvider.AMAZON_BEDROCK , 'ai-models.ai-providers.amazon-bedrock'],
     [AiProvider.GITHUB_MODELS , 'ai-models.ai-providers.github-models'],
-    [AiProvider.OLLAMA , 'ai-models.ai-providers.ollama']
+    [AiProvider.OLLAMA , 'ai-models.ai-providers.ollama'],
+    [AiProvider.DEEPSEEK , 'ai-models.ai-providers.deepseek']
   ]
 );
 
@@ -221,6 +223,17 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
       modelList: [],
       providerFieldsList: ['baseUrl'],
       modelFieldsList: ['temperature', 'topP', 'topK', 'maxOutputTokens', 'contextLength'],
+    },
+  ],
+  [
+    AiProvider.DEEPSEEK,
+    {
+      modelList: [
+        'deepseek-chat',
+        'deepseek-reasoner',
+      ],
+      providerFieldsList: ['apiKey'],
+      modelFieldsList: ['temperature', 'topP', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
     },
   ],
 ]);

@@ -41,6 +41,7 @@ import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.DeepSeekChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
@@ -68,6 +69,9 @@ import static java.util.Collections.singletonMap;
 
 @Component
 class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigurer {
+
+    // DeepSeek exposes an OpenAI-compatible API, so it is served by OpenAiChatModel against a fixed base URL
+    private static final String DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 
     @Override
     public ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig) {
@@ -303,6 +307,22 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         }
 
         return builder.build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(DeepSeekChatModelConfig chatModelConfig) {
+        return OpenAiChatModel.builder()
+                .baseUrl(DEEPSEEK_BASE_URL)
+                .apiKey(chatModelConfig.providerConfig().apiKey())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
+                .build();
     }
 
     private static void validateBaseUrl(String url) {

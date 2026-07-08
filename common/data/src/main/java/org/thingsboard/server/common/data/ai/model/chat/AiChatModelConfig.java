@@ -24,7 +24,8 @@ public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extend
         permits
         OpenAiChatModelConfig, AzureOpenAiChatModelConfig, GoogleAiGeminiChatModelConfig,
         GoogleVertexAiGeminiChatModelConfig, MistralAiChatModelConfig, AnthropicChatModelConfig,
-        AmazonBedrockChatModelConfig, GitHubModelsChatModelConfig, OllamaChatModelConfig {
+        AmazonBedrockChatModelConfig, GitHubModelsChatModelConfig, OllamaChatModelConfig,
+        DeepSeekChatModelConfig {
 
     ChatModel configure(Langchain4jChatModelConfigurer configurer);
 
