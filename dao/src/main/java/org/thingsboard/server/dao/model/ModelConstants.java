@@ -754,6 +754,17 @@ public class ModelConstants {
     public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
 
     /**
+     * AI solution constants.
+     */
+    public static final String AI_SOLUTION_TABLE_NAME = "ai_solution";
+    public static final String AI_SOLUTION_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
+    public static final String AI_SOLUTION_NAME_COLUMN_NAME = NAME_PROPERTY;
+    public static final String AI_SOLUTION_STATUS_COLUMN_NAME = "status";
+    public static final String AI_SOLUTION_ORIGINAL_PROMPT_COLUMN_NAME = "original_prompt";
+    public static final String AI_SOLUTION_SPEC_COLUMN_NAME = "spec";
+    public static final String AI_SOLUTION_INSTALLED_ENTITIES_COLUMN_NAME = "installed_entities";
+
+    /**
      * Api Key constants.
      */
     public static final String API_KEY_TABLE_NAME = "api_key";

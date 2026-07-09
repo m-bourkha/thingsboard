@@ -981,6 +981,19 @@ CREATE TABLE IF NOT EXISTS ai_model (
     CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
+CREATE TABLE IF NOT EXISTS ai_solution (
+    id                 UUID          NOT NULL PRIMARY KEY,
+    created_time       BIGINT        NOT NULL,
+    tenant_id          UUID          NOT NULL,
+    version            BIGINT        NOT NULL DEFAULT 1,
+    name               VARCHAR(255)  NOT NULL,
+    status             VARCHAR(32)   NOT NULL,
+    original_prompt    VARCHAR,
+    spec               JSONB,
+    installed_entities JSONB,
+    CONSTRAINT ai_solution_name_unq_key UNIQUE (tenant_id, name)
+);
+
 CREATE TABLE IF NOT EXISTS entity_group (
     id              UUID          NOT NULL CONSTRAINT entity_group_pkey PRIMARY KEY,
     created_time    BIGINT        NOT NULL,

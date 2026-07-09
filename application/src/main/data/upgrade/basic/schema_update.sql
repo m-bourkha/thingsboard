@@ -25,3 +25,20 @@ ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info varchar;
 ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes varchar(1000000);
 
 -- RULE CHAIN NOTES MIGRATION END
+
+-- AI SOLUTION TABLE CREATION START
+
+CREATE TABLE IF NOT EXISTS ai_solution (
+    id                 UUID          NOT NULL PRIMARY KEY,
+    created_time       BIGINT        NOT NULL,
+    tenant_id          UUID          NOT NULL,
+    version            BIGINT        NOT NULL DEFAULT 1,
+    name               VARCHAR(255)  NOT NULL,
+    status             VARCHAR(32)   NOT NULL,
+    original_prompt    VARCHAR,
+    spec               JSONB,
+    installed_entities JSONB,
+    CONSTRAINT ai_solution_name_unq_key UNIQUE (tenant_id, name)
+);
+
+-- AI SOLUTION TABLE CREATION END
