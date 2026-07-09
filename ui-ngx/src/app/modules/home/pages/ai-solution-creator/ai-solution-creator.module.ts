@@ -16,17 +16,23 @@
 
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { SharedModule } from '@shared/shared.module';
 import { AiSolutionCreatorRoutingModule } from '@home/pages/ai-solution-creator/ai-solution-creator-routing.module';
 import { AiSolutionCreatorComponent } from '@home/pages/ai-solution-creator/ai-solution-creator.component';
+import { AiSolutionInfoDialogComponent } from '@home/pages/ai-solution-creator/ai-solution-info-dialog.component';
+import { AiSolutionRenameDialogComponent } from '@home/pages/ai-solution-creator/ai-solution-rename-dialog.component';
 
 @NgModule({
   declarations: [
-    AiSolutionCreatorComponent
+    AiSolutionCreatorComponent,
+    AiSolutionInfoDialogComponent,
+    AiSolutionRenameDialogComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
+    TextFieldModule,
     AiSolutionCreatorRoutingModule
   ]
 })

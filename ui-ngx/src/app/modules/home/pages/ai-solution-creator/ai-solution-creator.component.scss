@@ -17,194 +17,413 @@
   display: flex;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
-.tb-ai-solution-creator {
-  width: 100%;
-  height: 100%;
+.solution-creator {
+  min-height: 0;
+  padding: 8px;
+  background: #f5f6f8;
+}
+
+/* ----------------------------------------------------------------------- side bar */
+
+.side-bar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 8px;
+  transition: width 0.2s ease;
+
+  &.expanded {
+    width: 260px;
+    min-width: 260px;
+  }
+
+  &.collapsed {
+    width: 72px;
+    min-width: 72px;
+
+    .new-solution {
+      min-width: 0;
+    }
+  }
+
+  .new-solution {
+    justify-content: flex-start;
+  }
+
+  .list-chats {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+
+    .title {
+      padding: 0 8px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.54);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .menu {
+      justify-content: flex-start;
+      overflow: hidden;
+
+      &.tb-active {
+        background: rgba(48, 86, 128, 0.1);
+      }
+
+      // Keep the label from pushing the overflow menu button out of the row.
+      ::ng-deep .mdc-button__label {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+
+        > span:first-child {
+          flex: 1;
+          min-width: 0;
+          text-align: left;
+        }
+      }
+
+      .actions {
+        flex: none;
+      }
+    }
+  }
+
+  .no-solutions {
+    padding: 16px;
+    color: rgba(0, 0, 0, 0.38);
+    text-align: center;
+  }
+}
+
+/* ----------------------------------------------------------------------- content */
+
+.solution-content {
+  min-width: 0;
+  min-height: 0;
   background: #fff;
 }
 
-.tb-solution-rail {
-  width: 260px;
-  min-width: 260px;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 12px;
-  gap: 8px;
+/* ----------------------------------------------------------------------- stepper header */
 
-  .tb-new-solution {
-    width: 100%;
-  }
+.solution-stepper-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
-  .tb-solution-list {
-    overflow-y: auto;
-    margin-top: 8px;
-  }
-
-  .tb-solution-item {
+  .stepper-step {
     display: flex;
-    align-items: center;
     gap: 8px;
-    padding: 8px;
-    border-radius: 8px;
-    cursor: pointer;
+    align-items: center;
+    color: rgba(0, 0, 0, 0.54);
 
-    &:hover {
-      background: rgba(0, 0, 0, 0.04);
-    }
-
-    &.selected {
-      background: rgba(48, 86, 128, 0.1);
-    }
-
-    .tb-solution-item-icon {
+    &.active {
       color: #305680;
+
+      .stepper-icon {
+        color: #fff;
+        background: #305680;
+        border-color: #305680;
+      }
     }
 
-    .tb-solution-item-body {
-      overflow: hidden;
-    }
+    &.ready {
+      color: rgba(0, 0, 0, 0.87);
 
-    .tb-solution-item-name {
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tb-solution-item-status {
-      font-size: 11px;
-      color: rgba(0, 0, 0, 0.54);
+      .stepper-icon {
+        color: #fff;
+        background: #2e7d32;
+        border-color: #2e7d32;
+      }
     }
   }
 
-  .tb-no-solutions {
-    padding: 16px;
-    text-align: center;
-    color: rgba(0, 0, 0, 0.38);
+  .stepper-icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid rgba(0, 0, 0, 0.24);
+    border-radius: 50%;
+  }
+
+  .stepper-label {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .stepper-connector {
+    flex: 1;
+    height: 1px;
+    margin: 0 16px;
+    background: rgba(0, 0, 0, 0.12);
+
+    &.completed {
+      background: #2e7d32;
+    }
   }
 }
 
-.tb-solution-content {
-  overflow: hidden;
-  padding: 16px;
-}
+/* ----------------------------------------------------------------------- landing */
 
-.tb-solution-landing {
-  height: 100%;
+.solution-landing {
+  min-height: 0;
   gap: 12px;
+  padding: 24px;
+  overflow-y: auto;
   text-align: center;
 
-  .tb-assistant-icon {
-    font-size: 56px;
+  .assistant-icon {
     width: 56px;
     height: 56px;
+    font-size: 56px;
     color: #305680;
   }
 
-  .tb-assistant-subtitle {
-    color: rgba(0, 0, 0, 0.6);
+  .assistant-subtitle {
     max-width: 520px;
+    color: rgba(0, 0, 0, 0.6);
   }
 
-  .tb-model-select {
+  .model-select {
     width: 320px;
   }
 
-  .tb-prompt-field {
-    width: 640px;
-    max-width: 90%;
-  }
-
-  .tb-suggestions {
+  .suggestions {
     gap: 8px;
     max-width: 760px;
   }
 
-  .tb-suggestion-chip {
+  .suggestion-chip {
     border-radius: 20px;
   }
 
-  .tb-generate-button {
-    margin-top: 8px;
+  .landing-prompt {
+    width: 640px;
+    max-width: 90%;
   }
 
-  .tb-generate-progress {
+  .generate-progress {
     width: 320px;
   }
 }
 
-.tb-analyzing {
-  color: rgba(0, 0, 0, 0.6);
-  padding: 8px;
-  font-style: italic;
-}
+/* ----------------------------------------------------------------------- installed summary */
 
-.tb-solution-stepper {
-  height: 100%;
-}
+.solution-installed {
+  min-height: 0;
+  gap: 8px;
+  padding: 24px;
+  overflow-y: auto;
+  text-align: center;
 
-.tb-step-content {
-  height: 100%;
-  gap: 16px;
-}
-
-.tb-chat-column {
-  width: 360px;
-  min-width: 320px;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-  padding-right: 12px;
-
-  .tb-chat-messages {
-    overflow-y: auto;
-    padding: 8px 0;
+  .installed-icon {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 16px;
+    font-size: 96px;
+    color: #305680;
   }
 
-  .tb-chat-message {
-    display: flex;
-    margin-bottom: 8px;
-
-    &.user {
-      justify-content: flex-end;
-    }
-
-    .tb-chat-bubble {
-      max-width: 85%;
-      padding: 8px 12px;
-      border-radius: 12px;
-      background: rgba(0, 0, 0, 0.05);
-      white-space: pre-wrap;
-    }
-
-    &.user .tb-chat-bubble {
-      background: rgba(48, 86, 128, 0.12);
-    }
-  }
-
-  .tb-chat-input {
-    width: 100%;
-  }
-}
-
-.tb-overview-column {
-  overflow: hidden;
-
-  .tb-overview-header {
-    margin-bottom: 12px;
-  }
-
-  .tb-overview-title {
-    font-size: 18px;
+  h2 {
+    margin: 0;
+    font-size: 28px;
     font-weight: 500;
   }
+
+  .installed-subtitle {
+    margin: 0 0 16px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .uninstall-link {
+    margin-top: 4px;
+  }
+
+  .generate-progress {
+    width: 320px;
+    margin-top: 8px;
+  }
 }
 
-.tb-basic-view {
-  overflow: auto;
+/* ----------------------------------------------------------------------- chat */
+
+.chat-container {
+  min-width: 0;
+  min-height: 0;
+  gap: 8px;
+  padding: 8px;
 }
+
+.chat {
+  flex: 0 0 400px;
+  width: 400px;
+  min-height: 0;
+  padding-right: 8px;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.chat-messages-container {
+  width: 100%;
+  min-height: 0;
+  padding: 8px 0;
+  overflow-y: auto;
+
+  .user {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+
+    .bubble {
+      max-width: 85%;
+      padding: 8px 12px;
+      white-space: pre-wrap;
+      background: rgba(48, 86, 128, 0.12);
+      border-radius: 12px;
+    }
+  }
+
+  .ai {
+    margin-bottom: 12px;
+
+    // tb-markdown pads its blocks for full-page docs; inside a chat bubble that reads as dead space.
+    ::ng-deep .tb-markdown-view > * {
+      padding-right: 0;
+      padding-left: 0;
+    }
+  }
+}
+
+.analyzing {
+  padding: 8px 0;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.action {
+  flex: none;
+}
+
+.prompt-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  .send-button {
+    margin-left: -40px;
+  }
+}
+
+.tb-dynamic-button {
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------------- overview panel */
+
+.overview {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tb-solution-settings {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+}
+
+.tb-solution-settings-toolbar.mat-toolbar {
+  flex: none;
+  min-height: 56px;
+  padding: 0 8px 0 16px;
+  font-size: 16px;
+  font-weight: 500;
+  background: #f9fbff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tb-solution-settings-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px;
+  overflow: hidden;
+
+  // tb-json-object-edit sizes its Ace editor against a resolved host height; without min-height the
+  // editor renders collapsed and only appears once the fullscreen overlay gives it a box.
+  tb-json-object-edit {
+    min-height: 300px;
+    overflow: hidden;
+  }
+}
+
+.tb-solution-settings-container-setting {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tb-solution-menu-container {
+  flex: 0 0 240px;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tb-solution-menu {
+  padding-top: 0;
+}
+
+.tb-dashboard-detail {
+  padding: 8px 24px;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  h4 {
+    margin: 16px 0 4px;
+  }
+
+  p {
+    margin: 0 0 16px;
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ----------------------------------------------------------------------- tables */
 
 .tb-tab-body {
-  padding: 12px 4px;
+  padding: 12px 16px;
 
   h4 {
     margin: 12px 0 4px;
@@ -215,16 +434,17 @@
   width: 100%;
   border-collapse: collapse;
 
-  th, td {
-    text-align: left;
+  th,
+  td {
     padding: 6px 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     font-size: 13px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   th {
-    color: rgba(0, 0, 0, 0.54);
     font-weight: 500;
+    color: rgba(0, 0, 0, 0.54);
   }
 }
 
@@ -237,44 +457,31 @@
   &.severity-WARNING { color: #ed9c28; }
 }
 
-.tb-empty,
-.tb-no-models {
+.tb-empty {
   padding: 12px;
   color: rgba(0, 0, 0, 0.38);
 }
 
-.tb-advanced-view {
-  overflow: hidden;
+/* ----------------------------------------------------------------------- install */
 
-  .tb-advanced-actions {
-    margin-top: 8px;
-  }
-}
-
-.tb-step-actions {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.tb-install-step {
-  gap: 16px;
-  padding: 8px;
+.tb-install-result {
+  padding: 8px 16px;
 }
 
 .tb-install-summary {
   padding: 12px;
-  border-radius: 8px;
+  margin-bottom: 12px;
   font-weight: 500;
+  border-radius: 8px;
 
   &.success {
-    background: rgba(46, 125, 50, 0.12);
     color: #2e7d32;
+    background: rgba(46, 125, 50, 0.12);
   }
 
   &.warn {
-    background: rgba(230, 81, 0, 0.12);
     color: #e65100;
+    background: rgba(230, 81, 0, 0.12);
   }
 }
 

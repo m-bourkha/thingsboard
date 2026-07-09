@@ -15,243 +15,523 @@
     limitations under the License.
 
 -->
-<div class="tb-ai-solution-creator" fxLayout="row" fxFlex>
+<section class="solution-creator flex size-full flex-row gap-2">
 
-  <!-- Saved solutions rail -->
-  <div class="tb-solution-rail" fxLayout="column">
-    <button mat-stroked-button color="primary" class="tb-new-solution" (click)="newSolution()">
-      <mat-icon>add</mat-icon>
-      <span translate>ai-solution-creator.new-chat</span>
-    </button>
-    <div class="tb-solution-list" fxFlex>
-      <div class="tb-solution-item"
-           *ngFor="let solution of savedSolutions"
-           [class.selected]="currentSolution?.id === solution.id"
-           (click)="selectSolution(solution)">
-        <mat-icon class="tb-solution-item-icon">auto_fix_high</mat-icon>
-        <div class="tb-solution-item-body" fxFlex>
-          <div class="tb-solution-item-name">{{ solution.name }}</div>
-          <div class="tb-solution-item-status">{{ 'ai-solution-creator.status.' + (solution.status || 'DRAFT') | translate }}</div>
-        </div>
-        <button mat-icon-button (click)="deleteSolution(solution, $event)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-      <div class="tb-no-solutions" *ngIf="!savedSolutions.length" translate>ai-solution-creator.no-solutions</div>
+  <!-- Saved solutions side bar -->
+  <div class="side-bar" [class.expanded]="sideBarExpanded" [class.collapsed]="!sideBarExpanded">
+    <div class="mb-4 flex justify-end">
+      <button mat-icon-button type="button" class="tb-mat-40 icon-button"
+              matTooltipPosition="after"
+              [matTooltip]="(sideBarExpanded ? 'ai-solution-creator.collapse-side-bar' : 'ai-solution-creator.expand-side-bar') | translate"
+              (click)="sideBarExpanded = !sideBarExpanded">
+        <mat-icon>{{ sideBarExpanded ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
     </div>
+
+    <button mat-button class="mb-5 new-solution" (click)="newSolution()">
+      <mat-icon>edit_square</mat-icon>
+      @if (sideBarExpanded) {
+        <span translate>ai-solution-creator.new-chat</span>
+      }
+    </button>
+
+    @if (sideBarExpanded) {
+      <div class="list-chats">
+        <div class="title" translate>ai-solution-creator.solutions</div>
+        @for (solution of savedSolutions; track solution.id) {
+          <button mat-button class="menu" [class.tb-active]="currentSolution?.id === solution.id"
+                  (click)="selectSolution(solution)">
+            <span tbTruncateWithTooltip>{{ solution.name }}</span>
+            <button mat-icon-button type="button" class="tb-mat-32 actions"
+                    [matMenuTriggerFor]="solutionMenu" (click)="$event.stopPropagation()">
+              <mat-icon class="tb-mat-20">more_horiz</mat-icon>
+            </button>
+            <mat-menu #solutionMenu="matMenu" xPosition="before">
+              <button mat-menu-item (click)="openForEdit(solution, $event)">
+                <mat-icon>edit</mat-icon>
+                <span translate>action.edit</span>
+              </button>
+              <button mat-menu-item (click)="renameSolution(solution, $event)">
+                <mat-icon>drive_file_rename_outline</mat-icon>
+                <span translate>ai-solution-creator.rename</span>
+              </button>
+              <button mat-menu-item (click)="deleteSolution(solution, $event)">
+                <mat-icon>delete</mat-icon>
+                <span translate>ai-solution-creator.delete</span>
+              </button>
+            </mat-menu>
+          </button>
+        } @empty {
+          <div class="no-solutions" translate>ai-solution-creator.no-solutions</div>
+        }
+      </div>
+    }
   </div>
 
   <!-- Main content -->
-  <div class="tb-solution-content" fxFlex fxLayout="column">
+  <div class="solution-content relative flex flex-auto flex-col overflow-hidden rounded-lg">
+
+    @if (hasSpec) {
+      <div class="solution-stepper-header">
+        @for (step of steps; track step; let i = $index; let last = $last) {
+          <div class="stepper-step" [class.ready]="currentStep > i" [class.active]="currentStep === i">
+            <div class="stepper-icon">
+              @if (currentStep > i) {
+                <mat-icon class="tb-mat-18">check</mat-icon>
+              } @else {
+                {{ i + 1 }}
+              }
+            </div>
+            <span class="stepper-label">{{ step | translate }}</span>
+          </div>
+          @if (!last) {
+            <div class="stepper-connector" [class.completed]="currentStep > i"></div>
+          }
+        }
+      </div>
+    }
 
     <!-- Landing -->
-    <div class="tb-solution-landing" *ngIf="!hasSpec" fxLayout="column" fxLayoutAlign="center center">
-      <mat-icon class="tb-assistant-icon">auto_awesome</mat-icon>
-      <h2 translate>ai-solution-creator.greeting-title</h2>
-      <p class="tb-assistant-subtitle" translate>ai-solution-creator.greeting-subtitle</p>
+    @if (!hasSpec) {
+      <div class="solution-landing flex flex-auto flex-col items-center justify-center">
+        <mat-icon class="assistant-icon">auto_awesome</mat-icon>
+        <h2 translate>ai-solution-creator.greeting-title</h2>
+        <p class="assistant-subtitle" translate>ai-solution-creator.greeting-subtitle</p>
 
-      <mat-form-field class="tb-model-select" appearance="outline">
-        <mat-label translate>ai-solution-creator.ai-model</mat-label>
-        <mat-select [(ngModel)]="selectedModelId">
-          <mat-option *ngFor="let model of models" [value]="model.id">{{ model.name }}</mat-option>
-        </mat-select>
-        <mat-hint *ngIf="!models.length" translate>ai-solution-creator.no-models</mat-hint>
-      </mat-form-field>
+        <mat-form-field class="model-select" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>ai-solution-creator.ai-model</mat-label>
+          <mat-select [(ngModel)]="selectedModelId">
+            @for (model of models; track model.id) {
+              <mat-option [value]="model.id">{{ model.name }}</mat-option>
+            }
+          </mat-select>
+          @if (!models.length) {
+            <mat-hint translate>ai-solution-creator.no-models</mat-hint>
+          }
+        </mat-form-field>
 
-      <mat-form-field class="tb-prompt-field" appearance="outline">
-        <mat-label translate>ai-solution-creator.describe-solution</mat-label>
-        <textarea matInput [(ngModel)]="prompt" rows="4"
-                  [placeholder]="'ai-solution-creator.describe-placeholder' | translate"></textarea>
-      </mat-form-field>
+        <div class="suggestions flex flex-row flex-wrap items-center justify-center">
+          @for (suggestion of suggestions; track suggestion.label) {
+            <button mat-stroked-button class="suggestion-chip" (click)="applySuggestion(suggestion)">
+              <mat-icon>{{ suggestion.icon }}</mat-icon>
+              <span>{{ suggestion.label }}</span>
+            </button>
+          }
+        </div>
 
-      <div class="tb-suggestions" fxLayout="row wrap" fxLayoutAlign="center center">
-        <button mat-stroked-button class="tb-suggestion-chip"
-                *ngFor="let suggestion of suggestions" (click)="applySuggestion(suggestion)">
-          <mat-icon>{{ suggestion.icon }}</mat-icon>
-          <span>{{ suggestion.label }}</span>
-        </button>
+        <div class="prompt-input landing-prompt">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mr-10 flex-1">
+            <textarea matInput rows="2" cdkTextareaAutosize cdkAutosizeMinRows="2" cdkAutosizeMaxRows="6"
+                      [(ngModel)]="prompt" (keydown.enter)="submitOnEnter($event) && generate()"
+                      [placeholder]="'ai-solution-creator.describe-placeholder' | translate"></textarea>
+          </mat-form-field>
+          <button mat-icon-button type="button" color="primary" class="tb-mat-24 send-button !size-8"
+                  [disabled]="generating || !selectedModelId || !prompt.trim()" (click)="generate()">
+            <mat-icon>send</mat-icon>
+          </button>
+        </div>
+
+        @if (generating) {
+          <mat-progress-bar mode="indeterminate" class="generate-progress"></mat-progress-bar>
+          <div class="analyzing" translate>ai-solution-creator.analyzing</div>
+        }
       </div>
+    }
 
-      <button mat-raised-button color="primary" class="tb-generate-button"
-              [disabled]="generating || !selectedModelId || !prompt.trim()" (click)="generate()">
-        <mat-icon>auto_fix_high</mat-icon>
-        <span translate>ai-solution-creator.generate</span>
-      </button>
-      <mat-progress-bar *ngIf="generating" mode="indeterminate" class="tb-generate-progress"></mat-progress-bar>
-      <div *ngIf="generating" class="tb-analyzing" translate>ai-solution-creator.analyzing</div>
-    </div>
+    <!-- Installed: the spec is locked behind an uninstall, so the wizard collapses to a summary -->
+    @if (hasSpec && showInstalledScreen) {
+      <div class="solution-installed flex flex-auto flex-col items-center justify-center">
+        <mat-icon class="installed-icon">check_circle</mat-icon>
+        <h2 translate>ai-solution-creator.installed-title</h2>
+        <p class="installed-subtitle" translate>ai-solution-creator.installed-subtitle</p>
 
-    <!-- Stepper -->
-    <mat-horizontal-stepper #stepper *ngIf="hasSpec" class="tb-solution-stepper" fxFlex>
+        <div class="installed-actions flex flex-row items-center justify-center gap-2">
+          <button mat-stroked-button type="button" (click)="editSolution()">
+            <mat-icon>edit</mat-icon>
+            <span translate>action.edit</span>
+          </button>
+          <button mat-stroked-button type="button" [disabled]="!mainDashboardId" (click)="openMainDashboard()">
+            <mat-icon>dashboard</mat-icon>
+            <span translate>ai-solution-creator.main-dashboard</span>
+          </button>
+          <button mat-stroked-button type="button" (click)="openInfo()">
+            <mat-icon>info</mat-icon>
+            <span translate>ai-solution-creator.info</span>
+          </button>
+        </div>
 
-      <mat-step [label]="'ai-solution-creator.step-architecture' | translate">
-        <div class="tb-step-content" fxLayout="row" fxFlex>
+        <button mat-button type="button" color="warn" class="uninstall-link"
+                [disabled]="installing" (click)="uninstall()">
+          <span translate>ai-solution-creator.uninstall</span>
+        </button>
 
-          <!-- Chat / refine column -->
-          <div class="tb-chat-column" fxLayout="column">
-            <div class="tb-chat-messages" fxFlex>
-              <div class="tb-chat-message" *ngFor="let msg of messages" [class.user]="msg.role === 'user'">
-                <div class="tb-chat-bubble">{{ msg.text }}</div>
+        @if (installing) {
+          <mat-progress-bar mode="indeterminate" class="generate-progress"></mat-progress-bar>
+        }
+      </div>
+    }
+
+    @if (hasSpec && !showInstalledScreen) {
+      <div class="chat-container flex w-full flex-auto rounded-lg">
+
+        <!-- Chat / refine column -->
+        <div class="chat relative flex size-full flex-col items-center justify-end gap-3">
+          <div class="chat-messages-container">
+            @for (message of messages; track $index) {
+              <div [class]="message.role === 'user' ? 'user' : 'ai'">
+                @if (message.role === 'user') {
+                  <div class="bubble">{{ message.text }}</div>
+                } @else {
+                  <tb-markdown usePlainMarkdown [data]="message.text"></tb-markdown>
+                }
               </div>
-              <div *ngIf="generating" class="tb-analyzing" translate>ai-solution-creator.analyzing</div>
-            </div>
-            <mat-form-field appearance="outline" class="tb-chat-input">
-              <input matInput [(ngModel)]="chatInput" (keyup.enter)="sendRefinement()"
-                     [placeholder]="'ai-solution-creator.enter-prompt' | translate">
-              <button mat-icon-button matSuffix (click)="sendRefinement()" [disabled]="generating || !chatInput.trim()">
-                <mat-icon>send</mat-icon>
-              </button>
-            </mat-form-field>
+            }
+            @if (generating || generatingDashboards) {
+              <div class="ai">
+                <div class="analyzing">
+                  {{ (generatingDashboards ? 'ai-solution-creator.designing-dashboards'
+                                           : 'ai-solution-creator.analyzing') | translate }}
+                </div>
+                <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+              </div>
+            }
           </div>
 
-          <!-- Overview column -->
-          <div class="tb-overview-column" fxFlex fxLayout="column">
-            <div class="tb-overview-header" fxLayout="row" fxLayoutAlign="space-between center">
-              <div class="tb-overview-title">{{ spec?.name }}</div>
-              <mat-button-toggle-group [(ngModel)]="viewMode">
-                <mat-button-toggle value="basic" translate>ai-solution-creator.basic</mat-button-toggle>
-                <mat-button-toggle value="advanced" translate>ai-solution-creator.advanced</mat-button-toggle>
-              </mat-button-toggle-group>
-            </div>
-
-            <!-- Basic view -->
-            <div class="tb-basic-view" *ngIf="viewMode === 'basic'" fxFlex>
-              <mat-tab-group [(selectedIndex)]="activeTab">
-
-                <mat-tab [label]="'ai-solution-creator.tab-entity-profiles' | translate">
-                  <div class="tb-tab-body">
-                    <h4 translate>ai-solution-creator.device-profiles</h4>
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.name</th><th translate>ai-solution-creator.owner</th><th translate>ai-solution-creator.telemetry</th></tr>
-                      <tr *ngFor="let p of spec?.entityProfiles?.deviceProfiles">
-                        <td>{{ p.name }}</td><td>{{ p.owner || 'TENANT' }}</td>
-                        <td>{{ keyList(p.telemetry) }}</td>
-                      </tr>
-                    </table>
-                    <h4 translate>ai-solution-creator.asset-profiles</h4>
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.name</th><th translate>ai-solution-creator.owner</th></tr>
-                      <tr *ngFor="let p of spec?.entityProfiles?.assetProfiles">
-                        <td>{{ p.name }}</td><td>{{ p.owner || 'TENANT' }}</td>
-                      </tr>
-                    </table>
-                    <h4 translate>ai-solution-creator.customers</h4>
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.name</th></tr>
-                      <tr *ngFor="let c of spec?.entityProfiles?.customers"><td>{{ c.name }}</td></tr>
-                    </table>
-                  </div>
-                </mat-tab>
-
-                <mat-tab [label]="'ai-solution-creator.tab-iam' | translate">
-                  <div class="tb-tab-body">
-                    <h4 translate>ai-solution-creator.roles</h4>
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.name</th><th translate>ai-solution-creator.type</th><th translate>ai-solution-creator.operations</th></tr>
-                      <tr *ngFor="let r of spec?.iam?.roles">
-                        <td>{{ r.name }}</td><td>{{ r.type }}</td><td>{{ (r.operations || []).join(', ') }}</td>
-                      </tr>
-                    </table>
-                    <h4 translate>ai-solution-creator.entity-groups</h4>
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.name</th><th translate>ai-solution-creator.type</th><th translate>ai-solution-creator.owner</th></tr>
-                      <tr *ngFor="let g of spec?.iam?.entityGroups">
-                        <td>{{ g.name }}</td><td>{{ g.entityType }}</td><td>{{ g.owner || 'TENANT' }}</td>
-                      </tr>
-                    </table>
-                    <h4 translate>ai-solution-creator.users</h4>
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.email</th><th translate>ai-solution-creator.type</th><th translate>ai-solution-creator.group</th></tr>
-                      <tr *ngFor="let u of spec?.iam?.users">
-                        <td>{{ u.email }}</td><td>{{ u.authority }}</td><td>{{ u.userGroup }}</td>
-                      </tr>
-                    </table>
-                  </div>
-                </mat-tab>
-
-                <mat-tab [label]="'ai-solution-creator.tab-calculated-fields' | translate">
-                  <div class="tb-tab-body">
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.name</th><th translate>ai-solution-creator.entity-profile</th><th translate>ai-solution-creator.output</th></tr>
-                      <tr *ngFor="let cf of spec?.calculatedFields">
-                        <td>{{ cf.name }}</td><td>{{ cf.entityProfile }}</td><td>{{ cf.output }}</td>
-                      </tr>
-                    </table>
-                    <div class="tb-empty" *ngIf="!spec?.calculatedFields?.length" translate>ai-solution-creator.none</div>
-                  </div>
-                </mat-tab>
-
-                <mat-tab [label]="'ai-solution-creator.tab-alarms' | translate">
-                  <div class="tb-tab-body">
-                    <table class="tb-spec-table">
-                      <tr><th translate>ai-solution-creator.type</th><th translate>ai-solution-creator.entity-profile</th><th translate>ai-solution-creator.severity</th><th translate>ai-solution-creator.condition</th></tr>
-                      <tr *ngFor="let a of spec?.alarms">
-                        <td>{{ a.type }}</td><td>{{ a.entityProfile }}</td>
-                        <td><span class="tb-severity" [class]="'severity-' + (a.severity || '')">{{ a.severity }}</span></td>
-                        <td>{{ a.key }} {{ a.operation }} {{ a.threshold }}</td>
-                      </tr>
-                    </table>
-                    <div class="tb-empty" *ngIf="!spec?.alarms?.length" translate>ai-solution-creator.none</div>
-                  </div>
-                </mat-tab>
-
-              </mat-tab-group>
-            </div>
-
-            <!-- Advanced JSON view -->
-            <div class="tb-advanced-view" *ngIf="viewMode === 'advanced'" fxFlex fxLayout="column">
-              <tb-json-content [(ngModel)]="advancedJson" contentType="JSON" [fillHeight]="true"></tb-json-content>
-              <div fxLayout="row" fxLayoutAlign="end center" class="tb-advanced-actions">
-                <button mat-stroked-button (click)="applyAdvancedJson()" translate>ai-solution-creator.apply</button>
+          <section class="action flex w-full flex-col items-center gap-3">
+            @if (currentStep === architectureStep) {
+              <div class="prompt-input">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mr-10 flex-1">
+                  <textarea matInput rows="2" cdkTextareaAutosize cdkAutosizeMinRows="2" cdkAutosizeMaxRows="6"
+                            [(ngModel)]="chatInput" (keydown.enter)="submitOnEnter($event) && sendRefinement()"
+                            [placeholder]="'ai-solution-creator.enter-prompt' | translate"></textarea>
+                </mat-form-field>
+                <button mat-icon-button type="button" color="primary" class="tb-mat-24 send-button !size-8"
+                        [disabled]="generating || !chatInput.trim()" (click)="sendRefinement()">
+                  <mat-icon>send</mat-icon>
+                </button>
               </div>
-            </div>
+            }
 
-            <div class="tb-step-actions" fxLayout="row" fxLayoutAlign="space-between center">
-              <button mat-stroked-button (click)="saveSolution()">
-                <mat-icon>save</mat-icon>
-                <span translate>action.save</span>
-              </button>
-              <button mat-raised-button color="primary" matStepperNext translate>ai-solution-creator.next-install</button>
+            <div class="flex w-full gap-2">
+              @if (currentStep > architectureStep) {
+                <button mat-stroked-button type="button" class="tb-dynamic-button" (click)="previousStep()">
+                  <span class="whitespace-nowrap" translate>ai-solution-creator.back</span>
+                </button>
+              }
+              <span class="flex-1"></span>
+              @if (currentStep === architectureStep) {
+                <button mat-stroked-button type="button" class="tb-dynamic-button"
+                        [disabled]="generating" (click)="saveSolution()">
+                  <mat-icon>save</mat-icon>
+                  <span class="whitespace-nowrap" translate>action.save</span>
+                </button>
+              }
+              @if (currentStep === dashboardStep) {
+                <button mat-button type="button" color="primary" class="tb-dynamic-button"
+                        [disabled]="generatingDashboards" (click)="generateDashboards()">
+                  <mat-icon>refresh</mat-icon>
+                  <span class="whitespace-nowrap" translate>ai-solution-creator.generate-again</span>
+                </button>
+              }
+              @if (currentStep === installStep && isInstalled()) {
+                <button mat-stroked-button type="button" color="warn" class="tb-dynamic-button"
+                        [disabled]="installing" (click)="uninstall()">
+                  <mat-icon>delete_sweep</mat-icon>
+                  <span class="whitespace-nowrap" translate>ai-solution-creator.uninstall</span>
+                </button>
+              }
+              @if (currentStep === architectureStep) {
+                <button mat-raised-button type="button" color="primary" class="tb-dynamic-button"
+                        [disabled]="generating" (click)="nextStep()">
+                  <span class="whitespace-nowrap" translate>ai-solution-creator.next-dashboards</span>
+                </button>
+              }
+              @if (currentStep === dashboardStep) {
+                <button mat-raised-button type="button" color="primary" class="tb-dynamic-button"
+                        [disabled]="!dashboards?.length || generatingDashboards" (click)="nextStep()">
+                  <span class="whitespace-nowrap" translate>ai-solution-creator.create-solution</span>
+                </button>
+              }
+              @if (currentStep === installStep) {
+                <button mat-raised-button type="button" color="primary" class="tb-dynamic-button"
+                        [disabled]="installing || !currentSolution" (click)="install()">
+                  <mat-icon>rocket_launch</mat-icon>
+                  <span class="whitespace-nowrap" translate>ai-solution-creator.create-solution</span>
+                </button>
+              }
+            </div>
+          </section>
+        </div>
+
+        <!-- Overview panel -->
+        <div class="overview">
+          <div class="tb-solution-settings">
+            <mat-toolbar class="tb-solution-settings-toolbar">
+              <div class="flex-1" tbTruncateWithTooltip>{{ overviewTitle }}</div>
+              @if (currentStep !== installStep) {
+                <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs" [(ngModel)]="viewMode">
+                  <tb-toggle-option value="basic">{{ 'ai-solution-creator.basic' | translate }}</tb-toggle-option>
+                  <tb-toggle-option value="advanced">{{ 'ai-solution-creator.advanced' | translate }}</tb-toggle-option>
+                </tb-toggle-select>
+              }
+            </mat-toolbar>
+
+            <div class="tb-solution-settings-container size-full">
+
+              <!-- Architecture design -->
+              @if (currentStep === architectureStep) {
+                @if (viewMode === 'basic') {
+                  <div class="tb-solution-settings-container-setting size-full">
+                    <mat-tab-group class="size-full" [(selectedIndex)]="activeTab">
+
+                      <mat-tab [label]="'ai-solution-creator.tab-entity-profiles' | translate">
+                        <div class="tb-tab-body">
+                          <h4 translate>ai-solution-creator.device-profiles</h4>
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.name</th>
+                              <th translate>ai-solution-creator.owner</th>
+                              <th translate>ai-solution-creator.telemetry</th>
+                            </tr>
+                            @for (profile of spec?.entityProfiles?.deviceProfiles; track profile.name) {
+                              <tr>
+                                <td>{{ profile.name }}</td>
+                                <td>{{ profile.owner || 'TENANT' }}</td>
+                                <td>{{ keyList(profile.telemetry) }}</td>
+                              </tr>
+                            }
+                          </table>
+                          <h4 translate>ai-solution-creator.asset-profiles</h4>
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.name</th>
+                              <th translate>ai-solution-creator.owner</th>
+                            </tr>
+                            @for (profile of spec?.entityProfiles?.assetProfiles; track profile.name) {
+                              <tr>
+                                <td>{{ profile.name }}</td>
+                                <td>{{ profile.owner || 'TENANT' }}</td>
+                              </tr>
+                            }
+                          </table>
+                          <h4 translate>ai-solution-creator.customers</h4>
+                          <table class="tb-spec-table">
+                            <tr><th translate>ai-solution-creator.name</th></tr>
+                            @for (customer of spec?.entityProfiles?.customers; track customer.name) {
+                              <tr><td>{{ customer.name }}</td></tr>
+                            }
+                          </table>
+                        </div>
+                      </mat-tab>
+
+                      <mat-tab [label]="'ai-solution-creator.tab-iam' | translate">
+                        <div class="tb-tab-body">
+                          <h4 translate>ai-solution-creator.roles</h4>
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.name</th>
+                              <th translate>ai-solution-creator.type</th>
+                              <th translate>ai-solution-creator.operations</th>
+                            </tr>
+                            @for (role of spec?.iam?.roles; track role.name) {
+                              <tr>
+                                <td>{{ role.name }}</td>
+                                <td>{{ role.type }}</td>
+                                <td>{{ (role.operations || []).join(', ') }}</td>
+                              </tr>
+                            }
+                          </table>
+                          <h4 translate>ai-solution-creator.entity-groups</h4>
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.name</th>
+                              <th translate>ai-solution-creator.type</th>
+                              <th translate>ai-solution-creator.owner</th>
+                            </tr>
+                            @for (group of spec?.iam?.entityGroups; track group.name) {
+                              <tr>
+                                <td>{{ group.name }}</td>
+                                <td>{{ group.entityType }}</td>
+                                <td>{{ group.owner || 'TENANT' }}</td>
+                              </tr>
+                            }
+                          </table>
+                          <h4 translate>ai-solution-creator.users</h4>
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.email</th>
+                              <th translate>ai-solution-creator.type</th>
+                              <th translate>ai-solution-creator.group</th>
+                            </tr>
+                            @for (user of spec?.iam?.users; track user.email) {
+                              <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.authority }}</td>
+                                <td>{{ user.userGroup }}</td>
+                              </tr>
+                            }
+                          </table>
+                        </div>
+                      </mat-tab>
+
+                      <mat-tab [label]="'ai-solution-creator.tab-calculated-fields' | translate">
+                        <div class="tb-tab-body">
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.name</th>
+                              <th translate>ai-solution-creator.entity-profile</th>
+                              <th translate>ai-solution-creator.output</th>
+                            </tr>
+                            @for (calculatedField of spec?.calculatedFields; track calculatedField.name) {
+                              <tr>
+                                <td>{{ calculatedField.name }}</td>
+                                <td>{{ calculatedField.entityProfile }}</td>
+                                <td>{{ calculatedField.output }}</td>
+                              </tr>
+                            } @empty {
+                              <tr><td class="tb-empty" translate>ai-solution-creator.none</td></tr>
+                            }
+                          </table>
+                        </div>
+                      </mat-tab>
+
+                      <mat-tab [label]="'ai-solution-creator.tab-alarms' | translate">
+                        <div class="tb-tab-body">
+                          <table class="tb-spec-table">
+                            <tr>
+                              <th translate>ai-solution-creator.type</th>
+                              <th translate>ai-solution-creator.entity-profile</th>
+                              <th translate>ai-solution-creator.severity</th>
+                              <th translate>ai-solution-creator.condition</th>
+                            </tr>
+                            @for (alarm of spec?.alarms; track alarm.type) {
+                              <tr>
+                                <td>{{ alarm.type }}</td>
+                                <td>{{ alarm.entityProfile }}</td>
+                                <td>
+                                  <span class="tb-severity" [class]="'severity-' + (alarm.severity || '')">
+                                    {{ alarm.severity }}
+                                  </span>
+                                </td>
+                                <td>{{ alarm.key }} {{ alarm.operation }} {{ alarm.threshold }}</td>
+                              </tr>
+                            } @empty {
+                              <tr><td class="tb-empty" translate>ai-solution-creator.none</td></tr>
+                            }
+                          </table>
+                        </div>
+                      </mat-tab>
+
+                    </mat-tab-group>
+                  </div>
+                } @else {
+                  <tb-json-object-edit class="h-full" [fillHeight]="true"
+                                       [ngModel]="specModel" (ngModelChange)="onSpecModelChange($event)">
+                  </tb-json-object-edit>
+                  <div class="flex justify-end">
+                    <button mat-stroked-button color="primary" [disabled]="!specModelDirty" (click)="applySpecModel()">
+                      {{ 'ai-solution-creator.apply' | translate }}
+                    </button>
+                  </div>
+                }
+              }
+
+              <!-- Dashboard design -->
+              @if (currentStep === dashboardStep) {
+                @if (viewMode === 'basic') {
+                  <div class="tb-solution-settings-container-setting size-full">
+                    <div class="tb-solution-menu-container w-60">
+                      <mat-selection-list class="tb-solution-menu flex flex-col items-stretch justify-start"
+                                          color="primary" hideSingleSelectionIndicator [multiple]="false"
+                                          (selectionChange)="onDashboardSelected($event)">
+                        @for (dashboard of dashboards; track dashboard.name; let i = $index) {
+                          <mat-list-option [value]="i" [selected]="selectedDashboardIndex === i">
+                            <span matListItemTitle>{{ dashboard.name }}</span>
+                            <span matListItemLine>{{ dashboard.assignedTo }}</span>
+                          </mat-list-option>
+                        } @empty {
+                          <div class="tb-empty" translate>ai-solution-creator.no-dashboards</div>
+                        }
+                      </mat-selection-list>
+                    </div>
+                    <div class="flex-1 overflow-auto">
+                      @if (selectedDashboard; as dashboard) {
+                        @if (dashboard.description) {
+                          <tb-markdown usePlainMarkdown [data]="dashboard.description"></tb-markdown>
+                        } @else {
+                          <div class="tb-dashboard-detail">
+                            <h3>{{ dashboard.name }}</h3>
+                            <p>{{ dashboard.overview }}</p>
+                            @if (dashboard.useCases?.length) {
+                              <h4 translate>ai-solution-creator.use-cases</h4>
+                              <ul>
+                                @for (useCase of dashboard.useCases; track useCase) {
+                                  <li>{{ useCase }}</li>
+                                }
+                              </ul>
+                            }
+                          </div>
+                        }
+                      }
+                    </div>
+                  </div>
+                } @else {
+                  <tb-json-object-edit class="h-full" [fillHeight]="true"
+                                       [ngModel]="dashboardsModel" (ngModelChange)="onDashboardsModelChange($event)">
+                  </tb-json-object-edit>
+                  <div class="flex justify-end">
+                    <button mat-stroked-button color="primary"
+                            [disabled]="!dashboardsModelDirty" (click)="applyDashboardsModel()">
+                      {{ 'ai-solution-creator.apply' | translate }}
+                    </button>
+                  </div>
+                }
+              }
+
+              <!-- Solution installation -->
+              @if (currentStep === installStep) {
+                <div class="tb-solution-settings-container-setting size-full">
+                  <div class="tb-install-result flex-1 overflow-auto">
+                    @if (installing) {
+                      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                    }
+                    @if (installResult) {
+                      <div class="tb-install-summary"
+                           [class.success]="installResult.success" [class.warn]="!installResult.success">
+                        {{ (installResult.success ? 'ai-solution-creator.install-success'
+                                                  : 'ai-solution-creator.install-partial') | translate }}
+                      </div>
+                      <table class="tb-spec-table tb-install-table">
+                        <tr>
+                          <th translate>ai-solution-creator.item-type</th>
+                          <th translate>ai-solution-creator.name</th>
+                          <th translate>ai-solution-creator.item-status</th>
+                          <th translate>ai-solution-creator.details</th>
+                        </tr>
+                        @for (item of installResult.items; track $index) {
+                          <tr>
+                            <td>{{ item.type }}</td>
+                            <td>{{ item.name }}</td>
+                            <td>
+                              <span class="tb-install-status" [class]="'status-' + (item.status || '')">
+                                {{ item.status }}
+                              </span>
+                            </td>
+                            <td>{{ item.message }}</td>
+                          </tr>
+                        }
+                      </table>
+                    } @else if (!installing) {
+                      <div class="tb-empty" translate>ai-solution-creator.install-hint</div>
+                    }
+                  </div>
+                </div>
+              }
+
             </div>
           </div>
         </div>
-      </mat-step>
-
-      <mat-step [label]="'ai-solution-creator.step-install' | translate">
-        <div class="tb-install-step" fxLayout="column">
-          <div class="tb-install-actions" fxLayout="row" fxLayoutAlign="start center">
-            <button mat-stroked-button matStepperPrevious translate>ai-solution-creator.back</button>
-            <span fxFlex></span>
-            <button mat-raised-button color="warn" *ngIf="isInstalled()" [disabled]="installing" (click)="uninstall()">
-              <mat-icon>delete_sweep</mat-icon>
-              <span translate>ai-solution-creator.uninstall</span>
-            </button>
-            <button mat-raised-button color="primary" [disabled]="installing || !currentSolution" (click)="install()">
-              <mat-icon>rocket_launch</mat-icon>
-              <span translate>ai-solution-creator.create-solution</span>
-            </button>
-          </div>
-
-          <mat-progress-bar *ngIf="installing" mode="indeterminate"></mat-progress-bar>
-
-          <div class="tb-install-result" *ngIf="installResult">
-            <div class="tb-install-summary"
-                 [class.success]="installResult.success" [class.warn]="!installResult.success">
-              {{ (installResult.success ? 'ai-solution-creator.install-success' : 'ai-solution-creator.install-partial') | translate }}
-            </div>
-            <table class="tb-spec-table tb-install-table">
-              <tr><th translate>ai-solution-creator.item-type</th><th translate>ai-solution-creator.name</th><th translate>ai-solution-creator.item-status</th><th translate>ai-solution-creator.details</th></tr>
-              <tr *ngFor="let item of installResult.items">
-                <td>{{ item.type }}</td>
-                <td>{{ item.name }}</td>
-                <td><span class="tb-install-status" [class]="'status-' + (item.status || '')">{{ item.status }}</span></td>
-                <td>{{ item.message }}</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-      </mat-step>
-
-    </mat-horizontal-stepper>
+      </div>
+    }
   </div>
-</div>
+</section>
