@@ -113,6 +113,19 @@ export interface AlarmSpec {
   threshold?: number;
 }
 
+export type DashboardScope = 'TENANT' | 'CUSTOMER';
+
+export interface DashboardSpec {
+  name?: string;
+  assignedTo?: string;
+  scope?: DashboardScope;
+  customer?: string;
+  overview?: string;
+  description?: string;
+  useCases?: string[];
+  entityProfiles?: string[];
+}
+
 export interface AiSolutionSpec {
   name?: string;
   description?: string;
@@ -120,6 +133,7 @@ export interface AiSolutionSpec {
   iam?: IamSpec;
   calculatedFields?: CalculatedFieldSpec[];
   alarms?: AlarmSpec[];
+  dashboards?: DashboardSpec[];
 }
 
 export type AiSolutionStatus = 'DRAFT' | 'INSTALLED' | 'PARTIALLY_INSTALLED' | 'FAILED' | 'UNINSTALLED';
@@ -167,6 +181,11 @@ export interface AiSolutionRefineRequest {
   modelId: string;
   currentSpec: AiSolutionSpec;
   message: string;
+}
+
+export interface AiSolutionDashboardRequest {
+  modelId: string;
+  spec: AiSolutionSpec;
 }
 
 export interface SolutionSuggestion {

@@ -22,10 +22,12 @@ import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
   AiSolution,
+  AiSolutionDashboardRequest,
   AiSolutionGenerateRequest,
   AiSolutionInstallResult,
   AiSolutionRefineRequest,
-  AiSolutionSpec
+  AiSolutionSpec,
+  DashboardSpec
 } from '@shared/models/ai-solution-creator.models';
 
 @Injectable({
@@ -43,6 +45,10 @@ export class AiSolutionCreatorService {
 
   public refineArchitecture(request: AiSolutionRefineRequest, config?: RequestConfig): Observable<AiSolutionSpec> {
     return this.http.post<AiSolutionSpec>('/api/ai/solution/refine', request, defaultHttpOptionsFromConfig(config));
+  }
+
+  public generateDashboards(request: AiSolutionDashboardRequest, config?: RequestConfig): Observable<DashboardSpec[]> {
+    return this.http.post<DashboardSpec[]>('/api/ai/solution/dashboards/generate', request, defaultHttpOptionsFromConfig(config));
   }
 
   public saveSolution(solution: AiSolution, config?: RequestConfig): Observable<AiSolution> {
