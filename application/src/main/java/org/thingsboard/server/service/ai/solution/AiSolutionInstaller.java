@@ -37,12 +37,16 @@ public interface AiSolutionInstaller {
 
     /**
      * Delete the given previously-installed entities in reverse creation order.
+     *
+     * @return the per-item status report plus whatever could <em>not</em> be deleted, so a partial
+     *         uninstall can be recorded and retried instead of orphaning entities.
      */
-    AiSolutionInstallResult uninstall(SecurityUser user, List<InstalledEntity> installedEntities);
+    Outcome uninstall(SecurityUser user, List<InstalledEntity> installedEntities);
 
     /**
-     * Result of an install run: the human-facing report and the machine-readable list of created
-     * entities that the {@code AiSolution} persists so the solution can be uninstalled later.
+     * Result of an install or uninstall run: the human-facing report plus the entities the solution
+     * owns afterwards — everything created by an install, or everything a failed uninstall left behind.
+     * This is what the {@code AiSolution} persists as its {@code installedEntities}.
      */
     record Outcome(AiSolutionInstallResult result, List<InstalledEntity> installedEntities) {
     }

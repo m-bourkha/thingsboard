@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.ai.solution.AiSolutionInstallResult.It
 import org.thingsboard.server.common.data.ai.solution.AiSolutionSpec;
 import org.thingsboard.server.common.data.ai.solution.AlarmSpec;
 import org.thingsboard.server.common.data.ai.solution.CalculatedFieldSpec;
+import org.thingsboard.server.common.data.ai.solution.DashboardSpec;
 import org.thingsboard.server.common.data.ai.solution.EntityProfilesSpec.AssetProfileSpec;
 import org.thingsboard.server.common.data.ai.solution.EntityProfilesSpec.CustomerSpec;
 import org.thingsboard.server.common.data.ai.solution.EntityProfilesSpec.DeviceProfileSpec;
@@ -68,6 +70,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
@@ -94,6 +97,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.group.EntityGroupService;
@@ -134,6 +138,7 @@ public class DefaultAiSolutionInstaller implements AiSolutionInstaller {
     private final GroupPermissionService groupPermissionService;
     private final UserService userService;
     private final AttributesService attributesService;
+    private final DashboardService dashboardService;
 
     @Override
     public Outcome install(SecurityUser user, AiSolutionSpec spec) {
@@ -148,6 +153,7 @@ public class DefaultAiSolutionInstaller implements AiSolutionInstaller {
         installPermissions(ctx, spec);
         installCalculatedFields(ctx, spec);
         installAlarms(ctx, spec);
+        installDashboards(ctx, spec);
         return new Outcome(AiSolutionInstallResult.of(ctx.items), ctx.installed);
     }
 
@@ -527,13 +533,40 @@ public class DefaultAiSolutionInstaller implements AiSolutionInstaller {
     }
 
     // ---------------------------------------------------------------------------------------------
+    // Dashboards (widget layout derived deterministically by AiSolutionDashboardBuilder)
+    // ---------------------------------------------------------------------------------------------
+
+    private void installDashboards(Ctx ctx, AiSolutionSpec spec) {
+        for (DashboardSpec ds : spec.dashboardsOrEmpty()) {
+            try {
+                CustomerId customerId = null;
+                if (ds.isCustomerScoped()) {
+                    customerId = resolveCustomerId(ctx, ds.customer());
+                    if (customerId == null) {
+                        ctx.skip("DASHBOARD", ds.name(), "customer '" + ds.customer() + "' not found");
+                        continue;
+                    }
+                }
+                Dashboard saved = dashboardService.saveDashboard(AiSolutionDashboardBuilder.build(ctx.tenantId, spec, ds));
+                ctx.record("DASHBOARD", ds.name(), saved.getId(), EntityType.DASHBOARD);
+                if (customerId != null) {
+                    dashboardService.assignDashboardToCustomer(ctx.tenantId, saved.getId(), customerId);
+                }
+            } catch (Exception e) {
+                ctx.fail("DASHBOARD", ds.name(), e);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
     // Uninstall
     // ---------------------------------------------------------------------------------------------
 
     @Override
-    public AiSolutionInstallResult uninstall(SecurityUser user, List<InstalledEntity> installedEntities) {
+    public Outcome uninstall(SecurityUser user, List<InstalledEntity> installedEntities) {
         TenantId tenantId = user.getTenantId();
         List<Item> items = new ArrayList<>();
+        List<InstalledEntity> remaining = new ArrayList<>();
         // Delete in reverse creation order so dependents go before their dependencies.
         List<InstalledEntity> reversed = new ArrayList<>(installedEntities);
         java.util.Collections.reverse(reversed);
@@ -542,15 +575,21 @@ public class DefaultAiSolutionInstaller implements AiSolutionInstaller {
                 deleteEntity(tenantId, entity);
                 items.add(Item.deleted(entity.entityType().name(), entity.name()));
             } catch (Exception e) {
+                log.warn("[{}] Failed to delete {} '{}' while uninstalling AI solution",
+                        tenantId, entity.entityType(), entity.name(), e);
                 items.add(Item.failed(entity.entityType().name(), entity.name(), e.getMessage()));
+                remaining.add(entity);
             }
         }
-        return AiSolutionInstallResult.of(items);
+        // Restore creation order, so a retry deletes the survivors dependents-first again.
+        java.util.Collections.reverse(remaining);
+        return new Outcome(AiSolutionInstallResult.of(items), remaining);
     }
 
     private void deleteEntity(TenantId tenantId, InstalledEntity entity) {
         UUID id = entity.id();
         switch (entity.entityType()) {
+            case DASHBOARD -> dashboardService.deleteDashboard(tenantId, new DashboardId(id));
             case GROUP_PERMISSION -> groupPermissionService.deleteGroupPermission(tenantId, new GroupPermissionId(id));
             case CALCULATED_FIELD -> calculatedFieldService.deleteCalculatedField(tenantId, new CalculatedFieldId(id));
             case USER -> {

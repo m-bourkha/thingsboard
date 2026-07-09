@@ -54,7 +54,10 @@ public record AiSolutionSpec(
         List<CalculatedFieldSpec> calculatedFields,
 
         @Schema(description = "Alarm rules configured on device profiles")
-        List<AlarmSpec> alarms
+        List<AlarmSpec> alarms,
+
+        @Schema(description = "Role-oriented dashboards, designed in the second step of the wizard")
+        List<DashboardSpec> dashboards
 ) implements Serializable {
 
     public EntityProfilesSpec entityProfilesOrEmpty() {
@@ -71,6 +74,10 @@ public record AiSolutionSpec(
 
     public List<AlarmSpec> alarmsOrEmpty() {
         return alarms != null ? alarms : List.of();
+    }
+
+    public List<DashboardSpec> dashboardsOrEmpty() {
+        return dashboards != null ? dashboards : List.of();
     }
 
 }

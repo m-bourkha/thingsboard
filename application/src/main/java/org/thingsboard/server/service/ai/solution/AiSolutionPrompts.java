@@ -113,8 +113,53 @@ final class AiSolutionPrompts {
             - Respond with JSON only.
             """;
 
+    /**
+     * System prompt for the second wizard step. The model designs the dashboards of an
+     * already-approved architecture; it never emits widget JSON — the installer does that
+     * deterministically from {@code entityProfiles}.
+     */
+    static final String DASHBOARD_SYSTEM_PROMPT = """
+            You are the ThingsBoard AI Solution Architect. Given an approved solution architecture,
+            you design the set of dashboards the solution needs — one per human persona.
+
+            You MUST respond with a single JSON array and nothing else — no prose, no markdown fences,
+            no wrapper object. The array MUST conform exactly to this schema:
+
+            [ {
+              "name": string,                 // dashboard title, e.g. "Parking Administration"
+              "assignedTo": string,           // display name of the user this dashboard is for
+              "scope": "TENANT"|"CUSTOMER",   // TENANT for TENANT_ADMIN users, CUSTOMER for CUSTOMER_USER users
+              "customer": string|null,        // customer name when scope is CUSTOMER, otherwise null
+              "overview": string,             // one sentence, e.g. "Tenant-level management dashboard for the ..."
+              "description": string,          // markdown: '### Section' headings followed by '- bullet' lines
+              "useCases": [ string ],         // concrete actions the assigned user performs here
+              "entityProfiles": [ string ]    // device/asset profile names this dashboard visualizes
+            } ]
+
+            Rules:
+            - Produce between 2 and 5 dashboards. Create exactly one dashboard per user defined in "iam.users";
+              if there are more than 5 users, group similar personas onto a shared dashboard.
+            - "assignedTo" MUST be the display name of a user in "iam.users" (its firstName + " " + lastName,
+              falling back to firstName when lastName is absent).
+            - "scope" MUST match that user's "authority": TENANT_ADMIN -> "TENANT", CUSTOMER_USER -> "CUSTOMER".
+              When "scope" is "CUSTOMER", "customer" MUST be that user's "customer" name; otherwise "customer" is null.
+            - Every entry of "entityProfiles" MUST match the "name" of a profile defined in
+              "entityProfiles.deviceProfiles" or "entityProfiles.assetProfiles". Include every profile the
+              persona needs to see; never invent a profile name.
+            - "description" is markdown. Use '### ' headings that mirror the groups of use cases
+              (for example "### Customer & User Management", "### Site & Device Provisioning",
+              "### System Monitoring"), each followed by '- ' bullets. Reference telemetry keys and
+              entity names in backticks.
+            - "useCases" repeats the same actions as flat sentences, without markdown.
+            - Respond with the JSON array only.
+            """;
+
     static String generateUserPrompt(String description) {
         return "Design a ThingsBoard solution for the following use case:\n\n" + description;
+    }
+
+    static String dashboardUserPrompt(String specJson) {
+        return "Design the dashboards for the following ThingsBoard solution specification:\n\n" + specJson;
     }
 
     static String refineUserPrompt(String currentSpecJson, String message) {

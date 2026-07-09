@@ -17,8 +17,11 @@ package org.thingsboard.server.service.ai.solution;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.ai.solution.AiSolutionSpec;
+import org.thingsboard.server.common.data.ai.solution.DashboardSpec;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.List;
 
 /**
  * Turns natural-language input into an {@link AiSolutionSpec} using the tenant's configured AI model.
@@ -35,5 +38,11 @@ public interface AiSolutionGenerationService {
      * Refine an existing spec according to a chat message and return the complete updated spec.
      */
     ListenableFuture<AiSolutionSpec> refine(TenantId tenantId, AiModelId modelId, AiSolutionSpec currentSpec, String message);
+
+    /**
+     * Design the dashboards of an already-approved architecture spec. Returns one {@link DashboardSpec}
+     * per persona; widget layout is derived deterministically at install time.
+     */
+    ListenableFuture<List<DashboardSpec>> generateDashboards(TenantId tenantId, AiModelId modelId, AiSolutionSpec spec);
 
 }

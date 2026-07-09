@@ -31,11 +31,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.ai.solution.AiSolution;
+import org.thingsboard.server.common.data.ai.solution.AiSolutionDashboardRequest;
 import org.thingsboard.server.common.data.ai.solution.AiSolutionGenerateRequest;
 import org.thingsboard.server.common.data.ai.solution.AiSolutionInstallResult;
 import org.thingsboard.server.common.data.ai.solution.AiSolutionRefineRequest;
 import org.thingsboard.server.common.data.ai.solution.AiSolutionSpec;
 import org.thingsboard.server.common.data.ai.solution.AiSolutionStatus;
+import org.thingsboard.server.common.data.ai.solution.DashboardSpec;
+import org.thingsboard.server.common.data.ai.solution.InstalledEntity;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -101,6 +105,24 @@ public class AiSolutionController extends BaseController {
         return wrapFuture(future);
     }
 
+    // --- Dashboard design ---------------------------------------------------------------------
+
+    @ApiOperation(
+            value = "Design solution dashboards (generateDashboards)",
+            notes = "Designs one dashboard per persona described by an already-generated architecture " +
+                    "specification. Returns the dashboard specifications; the actual widget layout is derived " +
+                    "deterministically when the solution is installed." + TENANT_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/dashboards/generate")
+    public DeferredResult<List<DashboardSpec>> generateDashboards(@RequestBody @Valid AiSolutionDashboardRequest request) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
+        ListenableFuture<List<DashboardSpec>> future = aiSolutionGenerationService.generateDashboards(
+                user.getTenantId(), new AiModelId(request.modelId()), request.spec());
+        return wrapFuture(future);
+    }
+
     // --- Solution persistence -----------------------------------------------------------------
 
     @ApiOperation(
@@ -147,14 +169,33 @@ public class AiSolutionController extends BaseController {
 
     @ApiOperation(
             value = "Delete AI solution (deleteAiSolution)",
-            notes = "Deletes the saved AI solution session. Does NOT remove entities created by an install; " +
-                    "uninstall first if you want those removed." + TENANT_AUTHORITY_PARAGRAPH
+            notes = "Deletes the saved AI solution session. If the solution is still installed, every entity it " +
+                    "created (profiles, devices, assets, calculated fields, alarm rules, roles, entity groups, " +
+                    "users, permissions and dashboards) is deleted first. If any of those deletions fail, the " +
+                    "solution is kept — marked partially installed with the surviving entities — so they can " +
+                    "still be cleaned up rather than being orphaned." + TENANT_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping("/{solutionId}")
     public boolean deleteAiSolution(
             @Parameter(description = "AI solution id", required = true) @PathVariable UUID solutionId) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
+        AiSolution solution = checkNotNull(aiSolutionService.findById(user.getTenantId(), solutionId));
+        List<InstalledEntity> installed =
+                solution.getInstalledEntities() != null ? solution.getInstalledEntities() : List.of();
+        if (!installed.isEmpty()) {
+            AiSolutionInstaller.Outcome outcome = aiSolutionInstaller.uninstall(user, installed);
+            if (!outcome.result().success()) {
+                // Deleting the record now would strand the entities we could not remove: keep it, pointing
+                // at the survivors, so the tenant can retry the delete once the blocker is resolved.
+                solution.setInstalledEntities(outcome.installedEntities());
+                solution.setStatus(AiSolutionStatus.PARTIALLY_INSTALLED);
+                aiSolutionService.save(solution);
+                throw new ThingsboardException("Failed to delete " + outcome.installedEntities().size() +
+                        " entity(-ies) created by this solution; the solution was not deleted",
+                        ThingsboardErrorCode.GENERAL);
+            }
+        }
         return aiSolutionService.deleteById(user.getTenantId(), solutionId);
     }
 
@@ -163,8 +204,8 @@ public class AiSolutionController extends BaseController {
     @ApiOperation(
             value = "Install AI solution (installAiSolution)",
             notes = "Creates every entity described by the solution's specification (profiles, devices, assets, " +
-                    "calculated fields, alarms, roles, entity groups, users and permissions) and returns a per-item " +
-                    "status report." + TENANT_AUTHORITY_PARAGRAPH
+                    "calculated fields, alarms, roles, entity groups, users, permissions and dashboards) and returns " +
+                    "a per-item status report." + TENANT_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/install")
@@ -191,13 +232,14 @@ public class AiSolutionController extends BaseController {
             @Parameter(description = "AI solution id", required = true) @PathVariable UUID solutionId) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         AiSolution solution = checkNotNull(aiSolutionService.findById(user.getTenantId(), solutionId));
-        List<org.thingsboard.server.common.data.ai.solution.InstalledEntity> installed =
+        List<InstalledEntity> installed =
                 solution.getInstalledEntities() != null ? solution.getInstalledEntities() : List.of();
-        AiSolutionInstallResult result = aiSolutionInstaller.uninstall(user, installed);
-        solution.setInstalledEntities(List.of());
-        solution.setStatus(AiSolutionStatus.UNINSTALLED);
+        AiSolutionInstaller.Outcome outcome = aiSolutionInstaller.uninstall(user, installed);
+        // Whatever survived a failed delete is still owned by the solution, so it stays uninstallable.
+        solution.setInstalledEntities(outcome.installedEntities());
+        solution.setStatus(outcome.result().success() ? AiSolutionStatus.UNINSTALLED : AiSolutionStatus.PARTIALLY_INSTALLED);
         aiSolutionService.save(solution);
-        return result;
+        return outcome.result();
     }
 
 }
