@@ -115,7 +115,8 @@ export enum MenuId {
   version_control = 'version_control',
   api_usage = 'api_usage',
   trendz_settings = 'trendz_settings',
-  ai_models = 'ai_models'
+  ai_models = 'ai_models',
+  ai_solution_creator = 'ai_solution_creator'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -304,6 +305,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/settings/ai-models',
       icon: 'auto_awesome'
+    }
+  ],
+  [
+    MenuId.ai_solution_creator,
+    {
+      id: MenuId.ai_solution_creator,
+      name: 'ai-solution-creator.ai-solution-creator',
+      type: 'link',
+      path: '/aiSolutionCreator',
+      icon: 'auto_fix_high'
     }
   ],
   [
@@ -917,6 +928,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {id: MenuId.calculated_fields},
+      {id: MenuId.ai_solution_creator},
       {
         id: MenuId.customers,
         pages: [

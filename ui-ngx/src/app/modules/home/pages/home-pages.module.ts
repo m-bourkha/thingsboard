@@ -48,6 +48,7 @@ import { ScadaSymbolModule } from '@home/pages/scada-symbol/scada-symbol.module'
 import { GatewaysModule } from '@home/pages/gateways/gateways.module';
 import { MobileModule } from '@home/pages/mobile/mobile.module';
 import { AiModelModule } from '@home/pages/ai-model/ai-model.module';
+import { AiSolutionCreatorModule } from '@home/pages/ai-solution-creator/ai-solution-creator.module';
 import { RoleModule } from '@home/pages/role/role.module';
 
 @NgModule({
@@ -84,6 +85,7 @@ import { RoleModule } from '@home/pages/role/role.module';
     AccountModule,
     ScadaSymbolModule,
     AiModelModule,
+    AiSolutionCreatorModule,
     RoleModule,
   ]
 })
