@@ -177,6 +177,11 @@ security:
     value_bytes_size: "${SECURITY_API_KEY_VALUE_PREFIX:64}"
   # Enable/disable case-sensitive username login
   user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
+  # RBAC group permissions: time (seconds) to cache a user's merged role/group permissions.
+  # Role and group permission changes invalidate the cache immediately; user-group membership
+  # changes are reflected within this interval.
+  user_permissions:
+    cache_ttl_seconds: "${SECURITY_USER_PERMISSIONS_CACHE_TTL_SECONDS:120}"
   claim:
     # Enable/disable claiming devices; if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming the specific device
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
